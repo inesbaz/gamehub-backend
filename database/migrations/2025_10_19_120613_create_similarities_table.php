@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('similarity', function (Blueprint $table) {
+        Schema::create('similarities', function (Blueprint $table) {
             $table->foreignId('user_a_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('user_b_id')->constrained('users')->cascadeOnDelete();
             $table->decimal('similarity', 5, 4)->default(0); // 0.0000–1.0000

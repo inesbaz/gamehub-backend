@@ -15,7 +15,6 @@ return new class extends Migration
             $table->string('store_name');
             $table->string('url');
             $table->timestamps();
-            $table->index(['store_slug']);
         });
     }
 

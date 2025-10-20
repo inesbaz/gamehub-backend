@@ -24,7 +24,6 @@ return new class extends Migration
         });
 
         // (Opcional) Evita seguirse a una misma persona (CHECK en MySQL 8+)
-        // Si tu versión soporta CHECKs:
         if (DB::getDriverName() === 'mysql') {
             DB::statement('ALTER TABLE follows
                 ADD CONSTRAINT chk_no_self_follow CHECK (follower_id <> followed_id)');
