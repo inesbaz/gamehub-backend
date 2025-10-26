@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('comments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();   // autor del comentario
-            $table->foreignId('review_id')->constrained()->cascadeOnDelete(); // comenta una reseña
+            $table->foreignId('post_id')->constrained()->cascadeOnDelete(); // comenta una reseña
             $table->longText('body');
             $table->timestamps();
             $table->softDeletes();

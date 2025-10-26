@@ -12,7 +12,7 @@ class Comment extends Model
 
     protected $fillable = [
         'user_id',
-        'review_id',
+        'post_id',
         'body',
     ];
 
@@ -27,9 +27,9 @@ class Comment extends Model
     }
 
     /** Reseña comentada */
-    public function review()
+    public function post()
     {
-        return $this->belongsTo(Review::class);
+        return $this->belongsTo(Post::class);
     }
 
     /** Likes recibidos (polimórfico) */
