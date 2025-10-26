@@ -25,9 +25,9 @@ return new class extends Migration
             $table->enum('camera', ['first', 'third', 'isometric', 'side', 'top', 'mixed'])->nullable();
             $table->enum('art_style', ['realistic', 'toon', 'pixel', 'lowpoly', 'anime', 'mixed'])->nullable();
 
-            // Duraciones y edad (útil para filtros)
-            $table->unsignedSmallInteger('avg_playtime_hours')->nullable();  // opcional si no lo llevas en games
-            $table->string('esrb_rating', 20)->nullable();                    // E, T, M…
+            // Datos RAWG/externos
+            $table->unsignedSmallInteger('avg_playtime_hours')->nullable(); // puedes duplicarlo aquí si quieres filtros
+            $table->string('esrb_rating', 20)->nullable();
 
             $table->timestamps();
 

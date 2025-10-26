@@ -12,7 +12,7 @@ return new class extends Migration
             $table->foreignId('game_id')->constrained()->cascadeOnDelete();
             $table->foreignId('platform_id')->constrained()->cascadeOnDelete();
             $table->primary(['game_id', 'platform_id']);
-            $table->index('platform_id'); // filtros por plataforma
+            $table->index('platform_id');
         });
     }
 

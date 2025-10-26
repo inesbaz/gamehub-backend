@@ -17,6 +17,7 @@ class Requirement extends Model
         'platform_id',
         'minimum',
         'recommended',
+        'source'
     ];
 
     // ─────────────────────────────────────────────

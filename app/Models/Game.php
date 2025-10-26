@@ -31,14 +31,16 @@ class Game extends Model
         'metacritic',
         'metacritic_url',
         'esrb_rating',
+        'last_synced_at',
     ];
 
     protected $casts = [
-        'release_date'      => 'date',
-        'rawg_updated_at'   => 'datetime',
-        'has_trailers'      => 'boolean',
-        'has_screenshots'   => 'boolean',
-        'rawg_rating_avg'   => 'decimal:1',
+        'release_date'    => 'date',
+        'rawg_updated_at' => 'datetime',
+        'last_synced_at'  => 'datetime',
+        'has_trailers'    => 'boolean',
+        'has_screenshots' => 'boolean',
+        'rawg_rating_avg' => 'decimal:1',
     ];
 
     // ─────────────────────────────────────────────
@@ -72,7 +74,9 @@ class Game extends Model
     /** Tiendas donde está disponible */
     public function stores()
     {
-        return $this->hasMany(Store::class);
+        return $this->belongsToMany(Store::class, 'game_store')
+            ->withPivot('url')
+            ->withTimestamps();
     }
 
     /** Capturas de pantalla */
@@ -96,7 +100,7 @@ class Game extends Model
             'game_id',
             'related_game_id'
         )->withPivot('type')
-         ->withTimestamps();
+            ->withTimestamps();
     }
 
     /** Relación inversa opcional (si quieres obtener los juegos que lo tienen como relacionado) */
@@ -108,7 +112,7 @@ class Game extends Model
             'related_game_id',
             'game_id'
         )->withPivot('type')
-         ->withTimestamps();
+            ->withTimestamps();
     }
 
     /** Géneros (N:M) */

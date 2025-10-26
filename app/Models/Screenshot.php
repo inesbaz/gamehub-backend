@@ -14,13 +14,14 @@ class Screenshot extends Model
         'image_url',
         'width',
         'height',
-        'position',
+        'ordering',
+        'external_id'
     ];
 
     protected $casts = [
         'width'    => 'integer',
         'height'   => 'integer',
-        'position' => 'integer',
+        'ordering' => 'integer',
     ];
 
     /** Juego al que pertenece la captura */

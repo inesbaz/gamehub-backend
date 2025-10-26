@@ -14,7 +14,9 @@ class GameRelation extends Model
     protected $fillable = [
         'game_id',
         'related_game_id',
-        'type', // dlc | expansion | goty | parent | series
+        'type',
+        'source',
+        'notes'
     ];
 
     protected $casts = [

@@ -12,8 +12,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('game_id')->constrained()->cascadeOnDelete();
             $table->foreignId('platform_id')->constrained()->cascadeOnDelete(); // PC/Windows/Linux/Mac
-            $table->text('minimum')->nullable();     // texto plano que da RAWG
-            $table->text('recommended')->nullable(); // idem
+            $table->text('minimum')->nullable();
+            $table->text('recommended')->nullable();
+            $table->string('source', 20)->default('rawg'); // opcional: 'rawg' | 'manual'
             $table->timestamps();
             $table->unique(['game_id', 'platform_id']);
         });

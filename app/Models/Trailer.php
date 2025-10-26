@@ -14,6 +14,12 @@ class Trailer extends Model
         'name',
         'preview_image',
         'video_url',
+        'external_id',
+        'ordering'
+    ];
+
+    protected $casts = [
+        'ordering' => 'integer'
     ];
 
     /** Juego al que pertenece el tráiler */

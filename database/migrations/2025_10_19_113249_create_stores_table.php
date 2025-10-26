@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::create('stores', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('game_id')->constrained()->cascadeOnDelete();
-            $table->string('store_slug');  // steam, gog, epic...
-            $table->string('store_name');
-            $table->string('url');
+            $table->unsignedBigInteger('external_id')->nullable()->unique();
+            $table->string('slug')->unique();       // steam, gog, epic...
+            $table->string('name')->unique();       // Steam, GOG, Epic Games Store...
+            $table->timestamp('last_synced_at')->nullable();
             $table->timestamps();
         });
     }

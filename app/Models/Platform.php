@@ -10,8 +10,14 @@ class Platform extends Model
     use HasFactory;
 
     protected $fillable = [
+        'external_id',
         'name',
         'slug',
+        'last_synced_at'
+    ];
+
+    protected $casts = [
+        'last_synced_at' => 'datetime',
     ];
 
     /**

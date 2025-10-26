@@ -13,19 +13,24 @@ class Store extends Model
     // Atributos
     // ─────────────────────────────────────────────
     protected $fillable = [
-        'game_id',
-        'store_slug',
-        'store_name',
-        'url',
+        'external_id',
+        'slug',
+        'name',
+        'last_synced_at',
+    ];
+
+    protected $casts = [
+        'last_synced_at' => 'datetime',
     ];
 
     // ─────────────────────────────────────────────
     // Relaciones
     // ─────────────────────────────────────────────
 
-    /** Juego al que pertenece esta tienda */
-    public function game()
+    public function games()
     {
-        return $this->belongsTo(Game::class);
+        return $this->belongsToMany(Game::class, 'game_store')
+            ->withPivot('url')
+            ->withTimestamps();
     }
 }

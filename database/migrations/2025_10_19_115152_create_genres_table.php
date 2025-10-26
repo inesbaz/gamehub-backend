@@ -10,8 +10,10 @@ return new class extends Migration
     {
         Schema::create('genres', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique();
+            $table->unsignedBigInteger('external_id')->nullable()->unique();
             $table->string('slug')->unique();
+            $table->string('name')->unique();
+            $table->timestamp('last_synced_at')->nullable();
             $table->timestamps();
         });
     }

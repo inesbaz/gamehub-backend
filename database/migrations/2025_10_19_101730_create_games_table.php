@@ -11,22 +11,23 @@ return new class extends Migration
         Schema::create('games', function (Blueprint $table) {
             $table->id();
 
-            // Identidad / sincronización con RAWG/IGDB
-            $table->unsignedBigInteger('external_id')->nullable();   // RAWG id
-            $table->string('external_slug')->nullable();             // RAWG slug (para re-sync)
+            // Identidad / sincronización con RAWG
+            $table->unsignedBigInteger('external_id')->nullable()->unique(); // RAWG id
+            $table->string('external_slug')->nullable()->index();            // RAWG slug
+            $table->timestamp('last_synced_at')->nullable();                  // cuándo lo importaste/actualizaste
 
             // Básicos de ficha
             $table->string('title');
-            $table->string('slug')->unique();
-            $table->longText('summary')->nullable();                 // RAWG puede traer descripciones largas/HTML
+            $table->string('slug')->unique(); // tu slug interno
+            $table->longText('summary')->nullable();
             $table->string('official_website')->nullable();
 
             // Fechas
             $table->date('release_date')->nullable();
-            $table->timestamp('rawg_updated_at')->nullable();        // última actualización conocida en RAWG
+            $table->timestamp('rawg_updated_at')->nullable(); // updated_at del juego en RAWG si lo expones
 
             // Duración/tiempo de juego
-            $table->unsignedSmallInteger('avg_playtime_hours')->nullable(); // tiempo medio (RAWG)
+            $table->unsignedSmallInteger('avg_playtime_hours')->nullable();
 
             // Media principal
             $table->string('cover_url')->nullable();
@@ -35,18 +36,17 @@ return new class extends Migration
             $table->boolean('has_screenshots')->default(false);
 
             // Ratings agregados (RAWG / Metacritic / ESRB)
-            $table->decimal('rawg_rating_avg', 3, 1)->nullable();    // p.ej. 4.3
+            $table->decimal('rawg_rating_avg', 3, 1)->nullable();
             $table->unsignedInteger('rawg_rating_count')->default(0);
-            $table->tinyInteger('metacritic')->nullable();           // 0–100
+            $table->unsignedTinyInteger('metacritic')->nullable();  // 0–100
             $table->string('metacritic_url')->nullable();
-            $table->string('esrb_rating', 20)->nullable();           // E, T, M, etc.
+            $table->string('esrb_rating', 20)->nullable();          // E, T, M…
 
             $table->timestamps();
 
-            // Índices útiles para filtros/búsquedas
+            // Índices útiles
             $table->index('title');
             $table->index('release_date');
-            $table->index('external_slug');
             $table->index('rawg_rating_avg');
             $table->index('metacritic');
             $table->index('esrb_rating');

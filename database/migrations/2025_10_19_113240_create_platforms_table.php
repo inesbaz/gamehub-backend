@@ -10,8 +10,10 @@ return new class extends Migration
     {
         Schema::create('platforms', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique(); // p.ej. "PlayStation 5"
-            $table->string('slug')->unique(); // "ps5"
+            $table->unsignedBigInteger('external_id')->nullable()->unique();
+            $table->string('slug')->unique();
+            $table->string('name')->unique();
+            $table->timestamp('last_synced_at')->nullable();
             $table->timestamps();
         });
     }

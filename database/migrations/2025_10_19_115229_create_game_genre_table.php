@@ -11,8 +11,8 @@ return new class extends Migration
         Schema::create('game_genre', function (Blueprint $table) {
             $table->foreignId('game_id')->constrained()->cascadeOnDelete();
             $table->foreignId('genre_id')->constrained()->cascadeOnDelete();
-            $table->primary(['game_id', 'genre_id']);   // PK compuesta
-            $table->index('genre_id');                 // filtros por género
+            $table->primary(['game_id', 'genre_id']);
+            $table->index('genre_id');
             $table->index('game_id');
         });
     }

@@ -11,11 +11,13 @@ return new class extends Migration
         Schema::create('screenshots', function (Blueprint $table) {
             $table->id();
             $table->foreignId('game_id')->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('external_id')->nullable()->index(); // si RAWG da id
             $table->string('image_url');
             $table->unsignedInteger('width')->nullable();
             $table->unsignedInteger('height')->nullable();
-            $table->unsignedSmallInteger('position')->default(0);
+            $table->unsignedSmallInteger('ordering')->default(0);
             $table->timestamps();
+            $table->index(['game_id', 'ordering']);
         });
     }
 
