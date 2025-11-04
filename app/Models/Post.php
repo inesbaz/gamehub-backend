@@ -35,6 +35,12 @@ class Post extends Model
         return $this->belongsTo(User::class);
     }
 
+    /** Comentarios en el post */
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
+
     /** Juego asociado (opcional) */
     public function game()
     {

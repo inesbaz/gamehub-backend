@@ -51,12 +51,6 @@ class Review extends Model
                     ->withTimestamps();
     }
 
-    /** Comentarios en la reseña */
-    public function comments()
-    {
-        return $this->hasMany(Comment::class);
-    }
-
     /** Likes (relación polimórfica) */
     public function likes()
     {

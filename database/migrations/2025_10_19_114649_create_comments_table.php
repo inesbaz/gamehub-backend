@@ -15,8 +15,6 @@ return new class extends Migration
             $table->longText('body');
             $table->timestamps();
             $table->softDeletes();
-
-            $table->index(['review_id','created_at']); // listados por reseña
         });
     }
 
