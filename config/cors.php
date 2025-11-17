@@ -2,7 +2,7 @@
 
 return [
     // Rutas del backend a las que el front puede llamar
-    'paths' => ['api/*', 'login', 'logout', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'register', 'login', 'logout', 'sanctum/csrf-cookie'],
     
     // Permite todos los métodos (GET, POST, etc.)
     'allowed_methods' => ['*'],

@@ -12,15 +12,18 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $data = $request->validate([
-            'email'    => ['required','email'],
-            'password' => ['required','string'],
+            'login'    => ['required', 'string'], // puede ser email o username
+            'password' => ['required', 'string'],
         ]);
 
-        if (! Auth::attempt($data)) {
+        // Detecta si es email o username
+        $field = filter_var($data['login'], FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+
+        if (! Auth::attempt([$field => $data['login'], 'password' => $data['password']])) {
             // Devuelve credenciales inválidas
             return response()->json(['message' => 'Credenciales incorrectas'], 422);
         }
-
+        
         // Cambia el ID de sesión tras un login correcto
         $request->session()->regenerate();
 
@@ -34,13 +37,13 @@ class AuthController extends Controller
         $minBirthdate = now()->subYears(13)->toDateString();
 
         $data = $request->validate([
-            'name'                  => ['required','string','min:2','max:60'],
-            'username'              => ['required','string','regex:/^[A-Za-z0-9_]{3,20}$/','unique:users,username'],
-            'email'                 => ['required','email','unique:users,email'],
-            'password'              => ['required','string','min:8','confirmed'], // requiere password_confirmation
-            'avatar_url'            => ['nullable','url'],
-            'country'               => ['nullable','string','size:2'],
-            'birthdate'             => ['nullable','date','before_or_equal:'.$minBirthdate],
+            'name'                  => ['required', 'string', 'min:2', 'max:60'],
+            'username'              => ['required', 'string', 'regex:/^[A-Za-z0-9_]{3,20}$/', 'unique:users,username'],
+            'email'                 => ['required', 'email', 'unique:users,email'],
+            'password'              => ['required', 'string', 'min:8', 'confirmed'],
+            'avatar_url'            => ['nullable', 'url'],
+            'country'               => ['nullable', 'string', 'size:2'],
+            'birthdate'             => ['nullable', 'date', 'before_or_equal:' . $minBirthdate],
         ]);
 
         $user = \App\Models\User::create([
@@ -64,7 +67,7 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         Auth::guard('web')->logout();
-        
+
         // Invalida la sesión y regenera el token
         $request->session()->invalidate();
         $request->session()->regenerateToken();
