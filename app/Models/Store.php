@@ -9,9 +9,6 @@ class Store extends Model
 {
     use HasFactory;
 
-    // ─────────────────────────────────────────────
-    // Atributos
-    // ─────────────────────────────────────────────
     protected $fillable = [
         'external_id',
         'slug',
@@ -22,10 +19,6 @@ class Store extends Model
     protected $casts = [
         'last_synced_at' => 'datetime',
     ];
-
-    // ─────────────────────────────────────────────
-    // Relaciones
-    // ─────────────────────────────────────────────
 
     public function games()
     {

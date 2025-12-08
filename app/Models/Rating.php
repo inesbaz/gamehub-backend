@@ -9,9 +9,6 @@ class Rating extends Model
 {
     use HasFactory;
 
-    // ─────────────────────────────────────────────
-    // Atributos
-    // ─────────────────────────────────────────────
     protected $fillable = [
         'user_id',
         'game_id',
@@ -22,17 +19,11 @@ class Rating extends Model
         'score' => 'integer',
     ];
 
-    // ─────────────────────────────────────────────
-    // Relaciones principales
-    // ─────────────────────────────────────────────
-
-    /** Usuario que dejó la valoración */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    /** Juego al que pertenece la valoración */
     public function game()
     {
         return $this->belongsTo(Game::class);

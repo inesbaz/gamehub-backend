@@ -9,10 +9,6 @@ class Follow extends Model
 {
     use HasFactory;
 
-    // ─────────────────────────────────────────────
-    // Configuración básica
-    // ─────────────────────────────────────────────
-    // No hay columna id autoincremental
     public $incrementing = false;
     protected $primaryKey = null;
 
@@ -21,17 +17,11 @@ class Follow extends Model
         'followed_id',
     ];
 
-    // ─────────────────────────────────────────────
-    // Relaciones
-    // ─────────────────────────────────────────────
-
-    /** Usuario que sigue a otro */
     public function follower()
     {
         return $this->belongsTo(User::class, 'follower_id');
     }
 
-    /** Usuario que es seguido */
     public function followed()
     {
         return $this->belongsTo(User::class, 'followed_id');

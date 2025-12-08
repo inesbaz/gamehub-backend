@@ -157,24 +157,6 @@ class ImportRawgGameService
                 $game->update(['has_trailers' => true]);
             }
 
-            // 9) Relaciones entre juegos (si el detalle incluye parent_game, additions, etc.) - RAWG indica si un juego es una expansión, DLC o tiene juego padre
-            // Si el juego tiene uno padre, lo registra como relación tipo parent
-            if (!empty($payload['parent_game'])) {
-                $parent = $this->ensureRelatedGameSkeleton($payload['parent_game']); // crea cascarón si hace falta
-                GameRelation::updateOrCreate(
-                    ['game_id' => $game->id, 'related_game_id' => $parent->id, 'type' => 'parent'],
-                    ['source' => 'rawg']
-                );
-            }
-            // Si tiene "additions" (DLCs, expansiones) las registra también
-            foreach (($payload['additions'] ?? []) as $add) {
-                $rel = $this->ensureRelatedGameSkeleton($add);
-                GameRelation::updateOrCreate(
-                    ['game_id' => $game->id, 'related_game_id' => $rel->id, 'type' => 'dlc'],
-                    ['source' => 'rawg']
-                );
-            }
-
             // Devuelve el juego con todas sus relaciones actualizadas
             return $game->fresh([
                 'genres',
@@ -200,21 +182,5 @@ class ImportRawgGameService
         $slug = strtolower($p->slug ?? '');
         $name = strtolower($p->name ?? '');
         return str_contains($slug, 'pc') || str_contains($name, 'pc') || str_contains($name, 'windows');
-    }
-
-
-     // Crea una ficha mínima de un juego relacionado (padre o DLC) por si aún no ha sido importado a la BD
-    private function ensureRelatedGameSkeleton(array $g): Game
-    {
-        return Game::updateOrCreate(
-            ['external_id' => $g['id'] ?? null],
-            [
-                'external_slug'  => $g['slug'] ?? null,
-                'title'          => $g['name'] ?? 'Unknown',
-                'slug'           => ($g['slug'] ?? null) ?: Str::slug(($g['name'] ?? 'game') . '-' . ($g['id'] ?? Str::random(5))),
-                'cover_url'      => $g['background_image'] ?? null,
-                'last_synced_at' => Carbon::now(),
-            ]
-        );
     }
 }

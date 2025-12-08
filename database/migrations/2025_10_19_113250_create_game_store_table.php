@@ -14,7 +14,6 @@ return new class extends Migration
             $table->string('url'); // enlace al juego en esa tienda
             $table->timestamps();
             $table->unique(['game_id', 'store_id']);
-            $table->index('store_id');
         });
     }
 

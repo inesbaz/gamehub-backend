@@ -15,6 +15,7 @@ return new class extends Migration
             $table->foreignId('review_id')->constrained()->cascadeOnDelete();
             $table->foreignId('emotion_id')->constrained('emotions')->cascadeOnDelete();
             $table->tinyInteger('intensity')->nullable(); // 1–5 (opcional)
+            
             $table->timestamps();
             $table->primary(['review_id','emotion_id']);
         });

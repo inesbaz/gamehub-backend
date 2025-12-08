@@ -12,8 +12,6 @@ return new class extends Migration
             $table->foreignId('game_id')->constrained()->cascadeOnDelete();
             $table->foreignId('genre_id')->constrained()->cascadeOnDelete();
             $table->primary(['game_id', 'genre_id']);
-            $table->index('genre_id');
-            $table->index('game_id');
         });
     }
 

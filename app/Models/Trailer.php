@@ -22,7 +22,6 @@ class Trailer extends Model
         'ordering' => 'integer'
     ];
 
-    /** Juego al que pertenece el tráiler */
     public function game()
     {
         return $this->belongsTo(Game::class);

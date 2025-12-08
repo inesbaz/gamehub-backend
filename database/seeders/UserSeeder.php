@@ -1,0 +1,274 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+
+class UserSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        // Hasheamos una vez la contraseña para reutilizarla
+        $password = Hash::make('qwer1234');
+
+        $users = [
+            [
+                'name'       => 'Inés Baz',
+                'username'   => 'hagne',
+                'email'      => 'inesbaz@gmail.com',
+                'country'    => 'ES',
+                'birthdate'  => '1994-01-12',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Jesús Ingalaturre',
+                'username'   => 'RNG_12',
+                'email'      => 'jesus.inga@jmail.com',
+                'country'    => 'ES',
+                'birthdate'  => '1992-11-03',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Alejandro Barbacil',
+                'username'   => 'shadowex',
+                'email'      => 'shadowex99@jmail.com',
+                'country'    => 'ES',
+                'birthdate'  => '1998-07-19',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Alex Pérez',
+                'username'   => 'retroAlex',
+                'email'      => 'alex.perez@jmail.com',
+                'country'    => 'ES',
+                'birthdate'  => '1990-02-25',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Marta López',
+                'username'   => 'marta_k',
+                'email'      => 'marta.lopez@jmail.com',
+                'country'    => 'ES',
+                'birthdate'  => '1997-09-08',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'David Ríos',
+                'username'   => 'davidRios',
+                'email'      => 'david.rios@jmail.com',
+                'country'    => 'MX',
+                'birthdate'  => '1993-05-30',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Noa Fernández',
+                'username'   => 'noaDev',
+                'email'      => 'noa.fernandez@jmail.com',
+                'country'    => 'ES',
+                'birthdate'  => '2000-01-15',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Fran Gómez',
+                'username'   => 'fran_juego',
+                'email'      => 'fran.gomez@jmail.com',
+                'country'    => 'ES',
+                'birthdate'  => '1994-08-22',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Carla Torres',
+                'username'   => 'catPlayer',
+                'email'      => 'carla.torres@jmail.com',
+                'country'    => 'AR',
+                'birthdate'  => '1996-03-11',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Nacho Vidal',
+                'username'   => 'pixelNacho',
+                'email'      => 'nacho.vidal@jmail.com',
+                'country'    => 'ES',
+                'birthdate'  => '1991-12-07',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Javier Navarro',
+                'username'   => 'jnavarro',
+                'email'      => 'javier.navarro@example.com',
+                'country'    => 'ES',
+                'birthdate'  => '1990-06-14',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Lucia Morales',
+                'username'   => 'lucia_m',
+                'email'      => 'lucia.morales@example.com',
+                'country'    => 'ES',
+                'birthdate'  => '1996-02-09',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Pablo Castillo',
+                'username'   => 'pabloc',
+                'email'      => 'pablo.castillo@example.com',
+                'country'    => 'ES',
+                'birthdate'  => '1993-10-21',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Elena Ruiz',
+                'username'   => 'elenaRz',
+                'email'      => 'elena.ruiz@example.com',
+                'country'    => 'ES',
+                'birthdate'  => '1997-01-18',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Andres Molina',
+                'username'   => 'andres_m',
+                'email'      => 'andres.molina@example.com',
+                'country'    => 'ES',
+                'birthdate'  => '1994-09-03',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Irene Campos',
+                'username'   => 'irenec',
+                'email'      => 'irene.campos@example.com',
+                'country'    => 'ES',
+                'birthdate'  => '1998-12-27',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Oscar Delgado',
+                'username'   => 'oscarDG',
+                'email'      => 'oscar.delgado@example.com',
+                'country'    => 'ES',
+                'birthdate'  => '1991-03-05',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Patricia Vega',
+                'username'   => 'patriV',
+                'email'      => 'patricia.vega@example.com',
+                'country'    => 'ES',
+                'birthdate'  => '1995-07-29',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Hector Santos',
+                'username'   => 'hectors',
+                'email'      => 'hector.santos@example.com',
+                'country'    => 'MX',
+                'birthdate'  => '1992-11-16',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Clara Nunez',
+                'username'   => 'claran',
+                'email'      => 'clara.nunez@example.com',
+                'country'    => 'ES',
+                'birthdate'  => '1999-04-02',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Ruben Aguilar',
+                'username'   => 'rubenAg',
+                'email'      => 'ruben.aguilar@example.com',
+                'country'    => 'ES',
+                'birthdate'  => '1993-01-25',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Sara Ibanez',
+                'username'   => 'sara_iba',
+                'email'      => 'sara.ibanez@example.com',
+                'country'    => 'ES',
+                'birthdate'  => '1996-06-08',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Tomas Herrera',
+                'username'   => 'tomas_h',
+                'email'      => 'tomas.herrera@example.com',
+                'country'    => 'AR',
+                'birthdate'  => '1991-09-19',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Miguel Prieto',
+                'username'   => 'miguelap',
+                'email'      => 'miguel.prieto@example.com',
+                'country'    => 'ES',
+                'birthdate'  => '1989-05-13',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Alba Gil',
+                'username'   => 'albita',
+                'email'      => 'alba.gil@example.com',
+                'country'    => 'ES',
+                'birthdate'  => '2000-03-22',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Diego Lozano',
+                'username'   => 'diegolz',
+                'email'      => 'diego.lozano@example.com',
+                'country'    => 'ES',
+                'birthdate'  => '1994-08-04',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Raquel Pena',
+                'username'   => 'raquelP',
+                'email'      => 'raquel.pena@example.com',
+                'country'    => 'ES',
+                'birthdate'  => '1997-02-14',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Bruno Cabrera',
+                'username'   => 'brunocb',
+                'email'      => 'bruno.cabrera@example.com',
+                'country'    => 'CL',
+                'birthdate'  => '1992-10-31',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Nuria Soto',
+                'username'   => 'nuriaS',
+                'email'      => 'nuria.soto@example.com',
+                'country'    => 'ES',
+                'birthdate'  => '1995-01-07',
+                'avatar_url' => null,
+            ],
+            [
+                'name'       => 'Gonzalo Leon',
+                'username'   => 'gonzaleon',
+                'email'      => 'gonzalo.leon@example.com',
+                'country'    => 'ES',
+                'birthdate'  => '1990-12-20',
+                'avatar_url' => null,
+            ],
+        ];
+
+        foreach ($users as $data) {
+            User::create([
+                'name'       => $data['name'],
+                'username'   => $data['username'],
+                'email'      => $data['email'],
+                'country'    => $data['country'],
+                'birthdate'  => $data['birthdate'],
+                'avatar_url' => $data['avatar_url'],
+                'password'   => $password,
+            ]);
+        }
+    }
+}

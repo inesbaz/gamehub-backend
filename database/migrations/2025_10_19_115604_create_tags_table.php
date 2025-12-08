@@ -14,8 +14,8 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->string('name')->unique();
             $table->timestamp('last_synced_at')->nullable();
+            
             $table->timestamps();
-            $table->index('slug');
         });
     }
 

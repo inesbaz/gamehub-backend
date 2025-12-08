@@ -18,20 +18,14 @@ class Recommendation extends Model
 
     protected $casts = [
         'score'  => 'decimal:4',
-        'reason' => 'array',     // JSON -> array asociativo
+        'reason' => 'array', // JSON -> array asociativo
     ];
 
-    // ─────────────────────────────────────────────
-    // Relaciones
-    // ─────────────────────────────────────────────
-
-    /** Usuario al que va dirigida la recomendación */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    /** Juego recomendado */
     public function game()
     {
         return $this->belongsTo(Game::class);

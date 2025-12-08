@@ -15,17 +15,11 @@ class Like extends Model
         'entity_id',
     ];
 
-    /**
-     * Usuario que dio el like
-     */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Entidad a la que pertenece el like (review, comment, post, etc.)
-     */
     public function entity()
     {
         return $this->morphTo(__FUNCTION__, 'entity_type', 'entity_id');

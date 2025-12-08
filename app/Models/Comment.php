@@ -16,23 +16,16 @@ class Comment extends Model
         'body',
     ];
 
-    // ─────────────────────────────────────────────
-    // Relaciones
-    // ─────────────────────────────────────────────
-
-    /** Autor del comentario */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    /** Reseña comentada */
     public function post()
     {
         return $this->belongsTo(Post::class);
     }
 
-    /** Likes recibidos (polimórfico) */
     public function likes()
     {
         return $this->morphMany(Like::class, 'entity');

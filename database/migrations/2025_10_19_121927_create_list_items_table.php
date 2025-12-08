@@ -15,8 +15,7 @@ return new class extends Migration
             $table->unsignedSmallInteger('position')->default(0);
             $table->timestamps();
 
-            $table->unique(['list_id', 'game_id']); // no repetir juego en la lista
-            $table->index(['list_id', 'position']);
+            $table->unique(['list_id', 'game_id']); // no se repiten juegos en la lista
         });
     }
 

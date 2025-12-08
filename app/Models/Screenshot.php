@@ -24,7 +24,6 @@ class Screenshot extends Model
         'ordering' => 'integer',
     ];
 
-    /** Juego al que pertenece la captura */
     public function game()
     {
         return $this->belongsTo(Game::class);

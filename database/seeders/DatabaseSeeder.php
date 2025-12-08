@@ -15,11 +15,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // Desde aquí se llama solo a los seeders que se quieran ejecutar -> php artisan db:seed
+        $this->call([
+            UserSeeder::class,
+            RawgGameSeeder::class
         ]);
     }
 }

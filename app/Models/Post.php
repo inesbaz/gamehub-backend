@@ -25,29 +25,21 @@ class Post extends Model
         'media_height' => 'integer',
     ];
 
-    // ─────────────────────────────
-    // Relaciones
-    // ─────────────────────────────
-
-    /** Autor del post */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    /** Comentarios en el post */
     public function comments()
     {
         return $this->hasMany(Comment::class);
     }
 
-    /** Juego asociado (opcional) */
     public function game()
     {
         return $this->belongsTo(Game::class);
     }
 
-    /** Likes recibidos (polimórfico) */
     public function likes()
     {
         return $this->morphMany(Like::class, 'entity');

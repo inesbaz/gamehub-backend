@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('name')->unique();    // ej. relax, miedo, tristeza, tensión…
             $table->string('slug')->unique();    // relax, fear, sadness…
+            
             $table->timestamps();
         });
     }

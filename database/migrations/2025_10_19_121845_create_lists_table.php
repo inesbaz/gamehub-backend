@@ -15,8 +15,6 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->boolean('is_public')->default(true);
             $table->timestamps();
-
-            $table->index(['user_id', 'is_public']);
         });
     }
 

@@ -10,9 +10,6 @@ class Review extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // ─────────────────────────────────────────────
-    // Atributos
-    // ─────────────────────────────────────────────
     protected $fillable = [
         'user_id',
         'game_id',
@@ -27,23 +24,17 @@ class Review extends Model
         'spoiler'        => 'boolean',
     ];
 
-    // ─────────────────────────────────────────────
-    // Relaciones principales
-    // ─────────────────────────────────────────────
-
-    /** Autor de la reseña */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    /** Juego reseñado */
+ 
     public function game()
     {
         return $this->belongsTo(Game::class);
     }
 
-    /** Emociones asociadas (relación N:M) */
     public function emotions()
     {
         return $this->belongsToMany(Emotion::class, 'review_emotion')
@@ -51,7 +42,6 @@ class Review extends Model
                     ->withTimestamps();
     }
 
-    /** Likes (relación polimórfica) */
     public function likes()
     {
         return $this->morphMany(Like::class, 'entity');

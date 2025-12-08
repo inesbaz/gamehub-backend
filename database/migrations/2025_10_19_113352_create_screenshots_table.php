@@ -17,7 +17,6 @@ return new class extends Migration
             $table->unsignedInteger('height')->nullable();
             $table->unsignedSmallInteger('ordering')->default(0);
             $table->timestamps();
-            $table->index(['game_id', 'ordering']);
         });
     }
 

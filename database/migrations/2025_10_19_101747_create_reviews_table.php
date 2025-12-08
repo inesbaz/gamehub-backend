@@ -24,9 +24,6 @@ return new class extends Migration
 
             // 1 reseña por usuario y juego
             $table->unique(['user_id', 'game_id']);
-
-            // para listados por juego recientes
-            $table->index(['game_id', 'created_at']);
         });
     }
 

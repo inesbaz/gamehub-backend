@@ -12,11 +12,11 @@ return new class extends Migration
             $table->foreignId('user_a_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('user_b_id')->constrained('users')->cascadeOnDelete();
             $table->decimal('similarity', 5, 4)->default(0); // 0.0000–1.0000
+            
             $table->timestamp('updated_at')->nullable();
 
-            // Evita duplicados y busca rápido por origen
+            // Se evitan duplicados
             $table->primary(['user_a_id','user_b_id']);
-            $table->index('user_a_id');
         });
     }
 

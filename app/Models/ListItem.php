@@ -21,18 +21,12 @@ class ListItem extends Model
         'position' => 'integer',
     ];
 
-    // ─────────────────────────────────────────────
-    // Relaciones
-    // ─────────────────────────────────────────────
-
-    /** Lista a la que pertenece el item */
     public function list()
     {
-        // Ojo: el modelo de la tabla lists lo llamamos ListModel para evitar palabra reservada
+        // Disclaimer: el modelo de la tabla 'Lists' se llama 'ListModel' para evitar palabra reservada
         return $this->belongsTo(ListModel::class, 'list_id');
     }
 
-    /** Juego incluido en la lista */
     public function game()
     {
         return $this->belongsTo(Game::class);

@@ -15,7 +15,7 @@ class Similarity extends Model
     public $incrementing = false;
     protected $primaryKey = null;
 
-    // Solo tenemos updated_at (no created_at)
+    // Solo hay updated_at, no created_at
     public $timestamps = true;
     public const CREATED_AT = null;
     public const UPDATED_AT = 'updated_at';
@@ -32,17 +32,13 @@ class Similarity extends Model
         'updated_at' => 'datetime',
     ];
 
-    // ─────────────────────────────────────────────
-    // Relaciones
-    // ─────────────────────────────────────────────
-
-    /** Usuario origen (A) */
+    // Usuario de origen
     public function userA()
     {
         return $this->belongsTo(User::class, 'user_a_id');
     }
 
-    /** Usuario destino (B) */
+    // Usuario de destino
     public function userB()
     {
         return $this->belongsTo(User::class, 'user_b_id');

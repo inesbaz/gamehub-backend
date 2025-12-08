@@ -20,9 +20,6 @@ class Tag extends Model
         'last_synced_at' => 'datetime',
     ];
 
-    /**
-     * Juegos asociados a esta etiqueta (N:M)
-     */
     public function games()
     {
         return $this->belongsToMany(Game::class, 'game_tag');

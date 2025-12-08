@@ -20,7 +20,6 @@ class Genre extends Model
         'last_synced_at' => 'datetime',
     ];
 
-    /** Juegos asociados a este género (N:M) */
     public function games()
     {
         return $this->belongsToMany(Game::class, 'game_genre');

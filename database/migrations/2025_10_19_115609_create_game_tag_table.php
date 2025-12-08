@@ -12,7 +12,6 @@ return new class extends Migration
             $table->foreignId('game_id')->constrained()->cascadeOnDelete();
             $table->foreignId('tag_id')->constrained()->cascadeOnDelete();
             $table->primary(['game_id', 'tag_id']);
-            $table->index('tag_id');
         });
     }
 

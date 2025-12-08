@@ -12,14 +12,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
 
-            // Polimórfico: review | comment (y en el futuro post, etc.)
-            $table->string('entity_type', 30);  // 'review' | 'comment | 'post'
+            // Polimórfico, para 'review', 'comment o 'post'
+            $table->string('entity_type', 30);
             $table->unsignedBigInteger('entity_id');
 
             $table->timestamps();
 
             $table->unique(['user_id', 'entity_type', 'entity_id']); // un like por usuario y entidad
-            $table->index(['entity_type', 'entity_id']);            // contar likes por entidad
         });
     }
 
