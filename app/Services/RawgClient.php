@@ -56,17 +56,43 @@ class RawgClient
         return $this->get("games/{$idOrSlug}");
     }
 
-    // Taxonomías (para sincornizar)
+    // Imágenes del juego (screenshots)
+    public function getGameScreenshots(int $externalId, int $page = 1): array
+    {
+        return $this->get("games/{$externalId}/screenshots", [
+            'page'      => $page,
+            'page_size' => 20,
+        ]);
+    }
+
+    // Vídeos del juego (trailers / movies)
+    public function getGameMovies(int $externalId): array
+    {
+        return $this->get("games/{$externalId}/movies");
+    }
+
+    // Taxonomías (para sincronizar)
     public function listPlatforms(int $page = 1)
     {
-        return $this->get('platforms', ['page' => $page, 'page_size' => $this->pageSize]);
+        return $this->get('platforms', [
+            'page'      => $page,
+            'page_size' => $this->pageSize,
+        ]);
     }
+
     public function listGenres(int $page = 1)
     {
-        return $this->get('genres',    ['page' => $page, 'page_size' => $this->pageSize]);
+        return $this->get('genres', [
+            'page'      => $page,
+            'page_size' => $this->pageSize,
+        ]);
     }
+
     public function listStores(int $page = 1)
     {
-        return $this->get('stores',    ['page' => $page, 'page_size' => $this->pageSize]);
+        return $this->get('stores', [
+            'page'      => $page,
+            'page_size' => $this->pageSize,
+        ]);
     }
 }

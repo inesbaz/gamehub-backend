@@ -18,24 +18,21 @@ class RawgGameSeeder extends Seeder
         $importer = app(ImportRawgGameService::class);
 
         $queries = [
-            'Cyberpunk 2077',
-            'The Witcher 3',
-            'Elden Ring',
-            'Hollow Knight',
-            'Hades',
-            'Red Dead Redemption 2',
-            'Ghost of Tsushima',
-            'The Long Dark',
+            // 'Cyberpunk 2077',
+            // 'The Witcher 3',
+            // 'Elden Ring',
+            // 'Hollow Knight',
+            // 'Hades',
+            // 'Red Dead Redemption 2',
+            // 'Ghost of Tsushima',
             'Horizon Forbidden West',
-            'God of War',
             'The Last of Us Part II',
             'Stardew Valley',
-            'Celeste',
             'Disco Elysium',
             'NieR Automata',
-            'Subnautica',
-            'Terraria',
-            'Minecraft',
+            // 'Subnautica',
+            // 'Terraria',
+            // 'Minecraft',
         ];
 
         foreach ($queries as $query) {

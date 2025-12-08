@@ -17,7 +17,7 @@ use Illuminate\Support\Str;
 
 /*
 *
-* Dada la slug o id de RAWG, trae el detalle y lo vuelca en la base de datos: juego + géneros + plataformas (+ requisitos PC) + tiendas (+ URL pivot) + tags + screenshots + trailer + relaciones (juego padre/DLC).
+* Dada la slug o id de RAWG, trae el detalle y lo vuelca en la base de datos: juego + géneros + plataformas (+ requisitos PC) + tiendas (+ URL pivot) + tags + screenshots + trailer.
 *
 * Convierte el JSON completo de RAWG en un modelo de Laravel.
 *
@@ -28,16 +28,27 @@ class ImportRawgGameService
     // Inyecta el cliente de RAWG (clase que hace las peticiones HTTP)
     public function __construct(private RawgClient $rawg) {}
 
-     // Importa un juego de RAWG por su slug o id numérico (lo crea o lo actualiza si ya existe en la BD)
+    // Importa un juego de RAWG por su slug o id numérico (lo crea o lo actualiza si ya existe en la BD)
     public function importBySlugOrId(string|int $idOrSlug): Game
     {
         // Llamada al cliente RAWG que devuelve un array con todos los datos del juego
         $payload = $this->rawg->getGameByIdOrSlug($idOrSlug);
 
-        // Usamos una transacción para que no quede nada a medias si algo falla
-        return DB::transaction(function () use ($payload) {
+        $extId   = $payload['id'] ?? null;
 
-            // 1) Upsert del juego (guarda o actualiza el juego principal)
+        // Llamadas fuera de la transacción para screenshots y trailers
+        $screenshotsResults = [];
+        $moviesResults      = [];
+
+        if ($extId) {
+            $screensRes = $this->rawg->getGameScreenshots($extId);
+            $screenshotsResults = $screensRes['results'] ?? [];
+            $moviesRes = $this->rawg->getGameMovies($extId);
+            $moviesResults = $moviesRes['results'] ?? [];
+        }
+
+        // Se usa una transacción para que no quede nada a medias si algo falla
+        return DB::transaction(function () use ($payload, $screenshotsResults, $moviesResults) {
             $extId   = $payload['id'] ?? null;
             $extSlug = $payload['slug'] ?? null;
 
@@ -55,8 +66,8 @@ class ImportRawgGameService
                     'avg_playtime_hours'  => $payload['playtime'] ?? null,
                     'cover_url'           => $payload['background_image'] ?? null,
                     'cover_thumb_url'     => $payload['background_image_additional'] ?? null,
-                    'has_trailers'        => false, // lo marcaremos al crear trailers
-                    'has_screenshots'     => !empty($payload['short_screenshots'] ?? []),
+                    'has_trailers'        => false,
+                    'has_screenshots'     => false,
                     'rawg_rating_avg'     => $payload['rating'] ?? null,
                     'rawg_rating_count'   => $payload['ratings_count'] ?? 0,
                     'metacritic'          => $payload['metacritic'] ?? null,
@@ -66,7 +77,7 @@ class ImportRawgGameService
                 ]
             );
 
-            // 2) Géneros (pivot) - RAWG devuelve un array con géneros que guardamos asociamos al juego
+            // 1) Géneros (pivot)
             foreach (($payload['genres'] ?? []) as $g) {
                 $genre = Genre::updateOrCreate(
                     ['external_id' => $g['id'] ?? null],
@@ -75,8 +86,8 @@ class ImportRawgGameService
                 $game->genres()->syncWithoutDetaching([$genre->id]);
             }
 
-            // 3) Plataformas (pivot) – RAWG incluye plataformas con posibles requisitos técnicos
-            $platformRefs = $payload['platforms'] ?? []; 
+            // 2) Plataformas (pivot)
+            $platformRefs = $payload['platforms'] ?? [];
             foreach ($platformRefs as $pRef) {
                 $pData = $pRef['platform'] ?? null;
                 if (!$pData) continue; // si no hay datos válidos, salta
@@ -87,22 +98,17 @@ class ImportRawgGameService
                 );
                 $game->platforms()->syncWithoutDetaching([$platform->id]);
 
-                // 4) Requisitos PC - Si la plataforma es PC/Windows y RAWG incluye requisitos se guarda como mínimo y recomendado
+                // 3) Requisitos
                 $req = $pRef['requirements'] ?? $pRef['requirements_en'] ?? null;
                 if ($req && $this->isPcPlatform($platform)) {
                     Requirement::updateOrCreate(
                         ['game_id' => $game->id, 'platform_id' => $platform->id],
-                        [
-                            'minimum'     => $req['minimum']     ?? null,
-                            'recommended' => $req['recommended'] ?? null,
-                            'source'      => 'rawg',
-                        ]
+                        ['minimum' => $req['minimum'] ?? null, 'recommended' => $req['recommended'] ?? null, 'source' => 'rawg']
                     );
                 }
             }
 
-            // 5) Tiendas (pivot con URL) - RAWG incluye dónde se vende el juego
-            // En el pivot se guarda además la URL de compra
+            // 4) Tiendas (pivot con URL)
             foreach (($payload['stores'] ?? []) as $s) {
                 $storeData = $s['store'] ?? null;
                 if (!$storeData) continue;
@@ -112,13 +118,13 @@ class ImportRawgGameService
                     ['name' => $storeData['name'] ?? '', 'slug' => $storeData['slug'] ?? '', 'last_synced_at' => Carbon::now()]
                 );
 
-                // Sincroniza con la tabla intermedia y añade la URL como campo extra
+                // Sincroniza con la tabla intermedia (pivot) y añade la URL como campo extra
                 $game->stores()->syncWithoutDetaching([
                     $store->id => ['url' => $s['url'] ?? $s['url_en'] ?? '']
                 ]);
             }
 
-            // 6) Tags + pivot - Etiquetas del juego (como géneros pero más específicas)
+            // 5) Tags (pivot)
             foreach (($payload['tags'] ?? []) as $t) {
                 $tag = Tag::updateOrCreate(
                     ['external_id' => $t['id'] ?? null],
@@ -127,34 +133,38 @@ class ImportRawgGameService
                 $game->tags()->syncWithoutDetaching([$tag->id]);
             }
 
-            // 7) Screenshots - RAWG devuelve una lista corta de imágenes de muestra
-            $shots = $payload['short_screenshots'] ?? [];
-            foreach ($shots as $i => $shot) {
-                Screenshot::updateOrCreate(
-                    ['game_id' => $game->id, 'image_url' => $shot['image'] ?? ''],
-                    [
-                        'width'    => null,
-                        'height'   => null,
-                        'ordering' => $i,
-                        'external_id' => $shot['id'] ?? null,
-                    ]
+            // 6) Screenshots (desde /games/{id}/screenshots)
+            Screenshot::where('game_id', $game->id)->delete();
+
+            foreach ($screenshotsResults as $i => $shot) {
+                Screenshot::create(
+                    ['game_id' => $game->id, 'image_url' => $shot['image'] ?? '', 'width' => $shot['width'] ?? null, 'height' => $shot['height'] ?? null, 'ordering' => $i, 'external_id' => $shot['id'] ?? null]
                 );
             }
 
-            // 8) Trailers (puede venir por otro endpoint) - Si existe un clip principal en el detalle del juego, se guarda y se marca como con trailer
-            // Si no, buscar otro método, por ejemplo, /games/{id}/movies
-            if (!empty($payload['clip'])) {
-                // payload['clip'] puede ser un objeto con urls
-                Trailer::updateOrCreate(
-                    ['game_id' => $game->id, 'video_url' => $payload['clip']['clip'] ?? ''],
-                    [
-                        'name'         => 'Main Clip',
-                        'preview_image' => $payload['clip']['preview'] ?? null,
-                        'ordering'     => 0,
-                    ]
+            if (!empty($screenshotsResults)) {
+                $game->has_screenshots = true;
+                $game->save();
+            }
+
+            // 7) Trailers (desde /games/{id}/movies)
+            Trailer::where('game_id', $game->id)->delete();
+
+            foreach ($moviesResults as $i => $movie) {
+                $videoUrl = $movie['data']['max'] ?? $movie['data']['480'] ?? null;
+
+                if (!$videoUrl) {
+                    continue;
+                }
+
+                Trailer::create(
+                    ['game_id' => $game->id, 'name' => $movie['name'] ?? 'Trailer', 'preview_image' => $movie['preview'] ?? null, 'video_url' => $videoUrl, 'external_id' => $movie['id'] ?? null, 'ordering' => $i]
                 );
-                // Actualizamos la bandera del juego
-                $game->update(['has_trailers' => true]);
+            }
+
+            if (!empty($moviesResults)) {
+                $game->has_trailers = true;
+                $game->save();
             }
 
             // Devuelve el juego con todas sus relaciones actualizadas

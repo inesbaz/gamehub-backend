@@ -1,0 +1,52 @@
+[
+    {
+        "external_id": 1,
+        "name": "Steam",
+        "slug": "steam"
+    },
+    {
+        "external_id": 2,
+        "name": "Xbox Store",
+        "slug": "xbox-store"
+    },
+    {
+        "external_id": 3,
+        "name": "PlayStation Store",
+        "slug": "playstation-store"
+    },
+    {
+        "external_id": 4,
+        "name": "App Store",
+        "slug": "apple-appstore"
+    },
+    {
+        "external_id": 5,
+        "name": "GOG",
+        "slug": "gog"
+    },
+    {
+        "external_id": 6,
+        "name": "Nintendo Store",
+        "slug": "nintendo"
+    },
+    {
+        "external_id": 7,
+        "name": "Xbox 360 Store",
+        "slug": "xbox360"
+    },
+    {
+        "external_id": 8,
+        "name": "Google Play",
+        "slug": "google-play"
+    },
+    {
+        "external_id": 9,
+        "name": "itch.io",
+        "slug": "itch"
+    },
+    {
+        "external_id": 11,
+        "name": "Epic Games",
+        "slug": "epic-games"
+    }
+]

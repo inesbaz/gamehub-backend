@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         // Desde aquí se llama solo a los seeders que se quieran ejecutar -> php artisan db:seed
         $this->call([
             UserSeeder::class,
+            StaticRawgTaxonomiesSeeder::class,
             RawgGameSeeder::class
         ]);
     }

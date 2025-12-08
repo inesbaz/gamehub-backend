@@ -1,0 +1,97 @@
+[
+    {
+        "external_id": 1,
+        "name": "Racing",
+        "slug": "racing"
+    },
+    {
+        "external_id": 2,
+        "name": "Shooter",
+        "slug": "shooter"
+    },
+    {
+        "external_id": 3,
+        "name": "Adventure",
+        "slug": "adventure"
+    },
+    {
+        "external_id": 4,
+        "name": "Action",
+        "slug": "action"
+    },
+    {
+        "external_id": 5,
+        "name": "RPG",
+        "slug": "role-playing-games-rpg"
+    },
+    {
+        "external_id": 6,
+        "name": "Fighting",
+        "slug": "fighting"
+    },
+    {
+        "external_id": 7,
+        "name": "Puzzle",
+        "slug": "puzzle"
+    },
+    {
+        "external_id": 10,
+        "name": "Strategy",
+        "slug": "strategy"
+    },
+    {
+        "external_id": 11,
+        "name": "Arcade",
+        "slug": "arcade"
+    },
+    {
+        "external_id": 14,
+        "name": "Simulation",
+        "slug": "simulation"
+    },
+    {
+        "external_id": 15,
+        "name": "Sports",
+        "slug": "sports"
+    },
+    {
+        "external_id": 17,
+        "name": "Card",
+        "slug": "card"
+    },
+    {
+        "external_id": 19,
+        "name": "Family",
+        "slug": "family"
+    },
+    {
+        "external_id": 28,
+        "name": "Board Games",
+        "slug": "board-games"
+    },
+    {
+        "external_id": 34,
+        "name": "Educational",
+        "slug": "educational"
+    },
+    {
+        "external_id": 40,
+        "name": "Casual",
+        "slug": "casual"
+    },
+    {
+        "external_id": 51,
+        "name": "Indie",
+        "slug": "indie"
+    },
+    {
+        "external_id": 59,
+        "name": "Massively Multiplayer",
+        "slug": "massively-multiplayer"
+    },
+    {
+        "external_id": 83,
+        "name": "Platformer",
+        "slug": "platformer"
+    }
+]

@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('game_id')->constrained()->cascadeOnDelete();
             $table->unsignedBigInteger('external_id')->nullable()->index();
             $table->string('name')->nullable();
-            $table->string('preview_image')->nullable(); 
+            $table->string('preview_image')->nullable();
             $table->string('video_url');
             $table->unsignedSmallInteger('ordering')->default(0);
             $table->timestamps();
