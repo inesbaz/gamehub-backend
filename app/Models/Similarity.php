@@ -9,7 +9,7 @@ class Similarity extends Model
 {
     use HasFactory;
 
-    protected $table = 'similarity';
+    protected $table = 'similarities';
 
     // No hay columna id y la PK es compuesta
     public $incrementing = false;
@@ -23,13 +23,15 @@ class Similarity extends Model
     protected $fillable = [
         'user_a_id',
         'user_b_id',
+        'common_games',
         'similarity',
         'updated_at',
     ];
 
     protected $casts = [
-        'similarity' => 'decimal:4',
-        'updated_at' => 'datetime',
+        'common_games' => 'integer',
+        'similarity'   => 'decimal:4',
+        'updated_at'   => 'datetime',
     ];
 
     // Usuario de origen

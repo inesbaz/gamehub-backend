@@ -1,9 +1,7 @@
 <?php
 
 return [
-
-    // (puedes dejar aquí el resto de mensajes genéricos que ya tenga tu archivo)
-
+    
     'custom' => [
         'name' => [
             'required' => 'El nombre es obligatorio',

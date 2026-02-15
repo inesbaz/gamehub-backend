@@ -18,6 +18,8 @@ return new class extends Migration
 
             // un rating por usuario y juego
             $table->unique(['user_id', 'game_id']);
+
+            $table->index(['game_id', 'user_id']);
         });
     }
 
