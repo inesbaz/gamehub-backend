@@ -9,6 +9,8 @@ class Recommendation extends Model
 {
     use HasFactory;
 
+    protected $table = 'recommendations';
+
     protected $fillable = [
         'user_id',
         'game_id',

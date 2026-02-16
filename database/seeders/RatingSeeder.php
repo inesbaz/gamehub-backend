@@ -556,7 +556,7 @@ class RatingSeeder extends Seeder
             ['user_id' => 27, 'game_id' => 168, 'score' => 1],  // Microsoft Flight Simulator 2020
 
             // brunocb
-            ['user_id' => 28, 'game_id' => 86,  'score' => 10],  // Mass Effect: Legendary Edition
+            ['user_id' => 28, 'game_id' => 86,  'score' => 10], // Mass Effect: Legendary Edition
             ['user_id' => 28, 'game_id' => 51,  'score' => 9],  // Cyberpunk 2077
             ['user_id' => 28, 'game_id' => 5,   'score' => 9],  // NieR:Automata
             ['user_id' => 28, 'game_id' => 52,  'score' => 8],  // Starfield
@@ -638,7 +638,7 @@ class RatingSeeder extends Seeder
             // lauraJRPG
             ['user_id' => 32, 'game_id' => 87,  'score' => 10], // Persona 5 Royal
             ['user_id' => 32, 'game_id' => 5,   'score' => 9],  // NieR:Automata
-            ['user_id' => 32, 'game_id' => 86,   'score' => 9],  // // Mass Effect: Legendary Edition
+            ['user_id' => 32, 'game_id' => 86,  'score' => 9],  // Mass Effect: Legendary Edition
             ['user_id' => 32, 'game_id' => 76,  'score' => 8],  // Clair Obscur: Expedition 33
             ['user_id' => 32, 'game_id' => 51,  'score' => 8],  // Cyberpunk 2077
             ['user_id' => 32, 'game_id' => 4,   'score' => 7],  // Disco Elysium
@@ -817,11 +817,13 @@ class RatingSeeder extends Seeder
         ];
 
         foreach ($ratings as $data) {
-            Rating::create([
-                'user_id' => $data['user_id'],
-                'game_id' => $data['game_id'],
-                'score'   => (int) $data['score'],
-            ]);
+            Rating::updateOrCreate(
+                [
+                    'user_id' => $data['user_id'],
+                    'game_id' => $data['game_id'],
+                ],
+                ['score' => (int) $data['score']]
+            );
         }
     }
 }

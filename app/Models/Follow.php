@@ -9,6 +9,8 @@ class Follow extends Model
 {
     use HasFactory;
 
+    protected $table = 'follows';
+
     public $incrementing = false;
     protected $primaryKey = null;
 

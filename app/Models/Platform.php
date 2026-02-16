@@ -9,6 +9,8 @@ class Platform extends Model
 {
     use HasFactory;
 
+    protected $table = 'platforms';
+
     protected $fillable = [
         'external_id',
         'name',

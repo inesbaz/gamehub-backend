@@ -348,15 +348,17 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($users as $data) {
-            User::create([
-                'name'       => $data['name'],
-                'username'   => $data['username'],
-                'email'      => $data['email'],
-                'country'    => $data['country'],
-                'birthdate'  => $data['birthdate'],
-                'avatar_url' => $data['avatar_url'],
-                'password'   => $password,
-            ]);
+            User::firstOrCreate(
+                ['email' => $data['email']],
+                [
+                    'name'       => $data['name'],
+                    'username'   => $data['username'],
+                    'country'    => $data['country'],
+                    'birthdate'  => $data['birthdate'],
+                    'avatar_url' => $data['avatar_url'],
+                    'password'   => $password,
+                ]
+            );
         }
     }
 }

@@ -21,7 +21,12 @@ class DatabaseSeeder extends Seeder
             // StaticRawgTaxonomiesSeeder::class,
             // RawgGameSeeder::class,
             // EmotionSeeder::class,
-            RatingSeeder::class,
+            // RatingSeeder::class,
+            // ReviewSeeder::class,
+            // ReviewEmotionSeeder::class,
+            // PostSeeder::class,
+            // CommentSeeder::class,
+            // ReviewAspectSeeder::class,
         ]);
     }
 }

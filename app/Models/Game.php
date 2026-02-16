@@ -9,6 +9,8 @@ class Game extends Model
 {
     use HasFactory;
 
+    protected $table = 'games';
+
     // ─────────────────────────────────────────────
     // Atributos
     // ─────────────────────────────────────────────
@@ -92,7 +94,7 @@ class Game extends Model
 
     public function aspects()
     {
-        return $this->hasMany(Aspect::class);
+        return $this->hasOne(Aspect::class);
     }
 
     public function posts()

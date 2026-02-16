@@ -10,6 +10,8 @@ class Review extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'reviews';
+
     protected $fillable = [
         'user_id',
         'game_id',
@@ -29,7 +31,7 @@ class Review extends Model
         return $this->belongsTo(User::class);
     }
 
- 
+
     public function game()
     {
         return $this->belongsTo(Game::class);
@@ -38,12 +40,17 @@ class Review extends Model
     public function emotions()
     {
         return $this->belongsToMany(Emotion::class, 'review_emotion')
-                    ->withPivot('intensity')
-                    ->withTimestamps();
+            ->withPivot('intensity')
+            ->withTimestamps();
     }
 
     public function likes()
     {
         return $this->morphMany(Like::class, 'entity');
+    }
+
+    public function aspects()
+    {
+        return $this->hasOne(ReviewAspect::class);
     }
 }

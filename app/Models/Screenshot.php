@@ -9,6 +9,8 @@ class Screenshot extends Model
 {
     use HasFactory;
 
+    protected $table = 'screenshots';
+
     protected $fillable = [
         'game_id',
         'image_url',

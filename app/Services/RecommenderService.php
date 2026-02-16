@@ -54,23 +54,23 @@ class RecommenderService
         //        - ORDER BY similarity DESC, common_games DESC
         //          LIMIT $topK
         $sql = "
-        SELECT
-          r2.user_id AS user_b_id,
-          COUNT(*) AS common_games,
-          (
-            (1 - (AVG(ABS(r1.score - r2.score)) / 9))
-            * (COUNT(*) / (COUNT(*) + ?))
-          ) AS similarity
-        FROM ratings r1
-        JOIN ratings r2
-          ON r1.game_id = r2.game_id
-         AND r2.user_id <> r1.user_id
-        WHERE r1.user_id = ?
-        GROUP BY r2.user_id
-        HAVING COUNT(*) >= ?
-        ORDER BY similarity DESC, common_games DESC
-        LIMIT $topK
-    ";
+            SELECT
+            r2.user_id AS user_b_id,
+            COUNT(*) AS common_games,
+            (
+                (1 - (AVG(ABS(r1.score - r2.score)) / 9))
+                * (COUNT(*) / (COUNT(*) + ?))
+            ) AS similarity
+            FROM ratings r1
+            JOIN ratings r2
+            ON r1.game_id = r2.game_id
+            AND r2.user_id <> r1.user_id
+            WHERE r1.user_id = ?
+            GROUP BY r2.user_id
+            HAVING COUNT(*) >= ?
+            ORDER BY similarity DESC, common_games DESC
+            LIMIT $topK
+        ";
 
         $rows = DB::select($sql, [$shrink, $userA, $minCommon]);
 

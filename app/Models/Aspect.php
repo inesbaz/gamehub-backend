@@ -9,6 +9,8 @@ class Aspect extends Model
 {
     use HasFactory;
 
+    protected $table = 'aspects';
+
     protected $fillable = [
         'game_id',
         'story_avg',

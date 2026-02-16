@@ -9,6 +9,8 @@ class Requirement extends Model
 {
     use HasFactory;
 
+    protected $table = 'requirements';
+
     protected $fillable = [
         'game_id',
         'platform_id',

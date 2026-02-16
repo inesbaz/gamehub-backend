@@ -9,6 +9,8 @@ class Emotion extends Model
 {
     use HasFactory;
 
+    protected $table = 'emotions';
+
     protected $fillable = [
         'name',
         'slug',
