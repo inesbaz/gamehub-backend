@@ -12,11 +12,15 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('game_id')->constrained('games')->cascadeOnDelete();
+
             $table->decimal('score', 6, 4)->default(0); // ranking interno
             $table->json('reason')->nullable(); // por ejemplo: {"aspects":["story"]}
+            
             $table->timestamps();
 
             $table->unique(['user_id','game_id']);
+
+            $table->index(['user_id', 'score']);
         });
     }
 
