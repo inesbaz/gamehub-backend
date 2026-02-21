@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\Review;
 use App\Models\Aspect;
-use Illuminate\Support\Facades\DB;
 
 class AspectService
 {
     /**
-     * Recalcula el resumen de aspectos (tabla `aspects`) para un juego.
+     * Recalcula el resumen de aspectos para un juego.
      *
      * - 'review_aspect' guarda las puntuaciones por review (1–10, nullable).
      * 
@@ -17,30 +17,28 @@ class AspectService
      * 
      *   Ejemplo: si una review solo puntúa art y difficulty, no afecta a story.
      *
-     * - Si el usuario no puntúa ningú aspecto (toda la fila NULL),
+     * - Si el usuario no puntúa ningún aspecto (toda la fila NULL),
      *   esa review no cuenta.
      *
      */
     public function recomputeGameAspects(int $gameId): void
     {
-        $query = DB::table('reviews as r')
-            ->join('review_aspect as ra', 'ra.review_id', '=', 'r.id')
-            ->where('r.game_id', $gameId)
-            ->whereNull('r.deleted_at')
-            ->where(function ($where) {     // excluye filas donde el usuario no valora nada
-                $where->whereNotNull('ra.story_score')
+        $row = Review::query()
+            ->join('review_aspect as ra', 'ra.review_id', '=', 'reviews.id')
+            ->where('reviews.game_id', $gameId)
+            ->where(function ($q) {
+                $q->whereNotNull('ra.story_score')
                     ->orWhereNotNull('ra.gameplay_score')
                     ->orWhereNotNull('ra.exploration_score')
                     ->orWhereNotNull('ra.art_score')
                     ->orWhereNotNull('ra.difficulty_score');
-            });
-
-        $row = $query->selectRaw('AVG(ra.story_score) as story_avg')
+            })
+            ->selectRaw('AVG(ra.story_score) as story_avg')
             ->selectRaw('AVG(ra.gameplay_score) as gameplay_avg')
             ->selectRaw('AVG(ra.exploration_score) as exploration_avg')
             ->selectRaw('AVG(ra.art_score) as art_avg')
             ->selectRaw('AVG(ra.difficulty_score) as difficulty_avg')
-            ->selectRaw('COUNT(*) as reviews_count')    // cuenta reviews con al menos 1 score
+            ->selectRaw('COUNT(*) as reviews_count')
             ->first();
 
         Aspect::updateOrCreate(
@@ -51,7 +49,7 @@ class AspectService
                 'exploration_avg' => $row?->exploration_avg,
                 'art_avg'         => $row?->art_avg,
                 'difficulty_avg'  => $row?->difficulty_avg,
-                'reviews_count'   => (int)($row?->reviews_count ?? 0),
+                'reviews_count'   => (int) ($row?->reviews_count ?? 0),
             ]
         );
     }

@@ -22,8 +22,18 @@ class Genre extends Model
         'last_synced_at' => 'datetime',
     ];
 
+    protected $appends = ['display_name'];
+
     public function games()
     {
         return $this->belongsToMany(Game::class, 'game_genre');
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        $key = 'genres.' . $this->slug;
+        $t = __($key);
+
+        return $t === $key ? $this->name : $t;
     }
 }

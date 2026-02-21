@@ -12,3 +12,7 @@ Route::get('/search', [\App\Http\Controllers\SearchController::class, 'search'])
 
 // Detalle de juego con lazy import
 Route::get('/games/{slug}', [GameController::class, 'show']);
+
+// Endpoints para las vistas de Juegos
+Route::get('/explore/genres', [GameController::class, 'exploreGenres']);
+Route::get('/explore/games', [GameController::class, 'exploreGames']);

@@ -22,8 +22,18 @@ class Tag extends Model
         'last_synced_at' => 'datetime',
     ];
 
+    protected $appends = ['display_name'];
+
     public function games()
     {
         return $this->belongsToMany(Game::class, 'game_tag');
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        $key = 'tags.' . $this->slug;
+        $t = __($key);
+
+        return $t === $key ? $this->name : $t;
     }
 }

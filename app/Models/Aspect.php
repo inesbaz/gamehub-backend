@@ -30,7 +30,6 @@ class Aspect extends Model
         'reviews_count'    => 'integer',
     ];
 
-    /** Relación 1:1 (resumen) con el juego */
     public function game()
     {
         return $this->belongsTo(Game::class);

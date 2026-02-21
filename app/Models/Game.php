@@ -54,7 +54,7 @@ class Game extends Model
     {
         return $this->hasMany(Rating::class);
     }
-    
+
     public function systemRequirements()
     {
         return $this->hasMany(Requirement::class);
@@ -110,5 +110,10 @@ class Game extends Model
     public function recommendations()
     {
         return $this->hasMany(Recommendation::class);
+    }
+
+    public function getCoverUrlAttribute($value)
+    {
+        return $value ?: url('/images/no-image.png');
     }
 }
