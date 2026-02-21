@@ -22,7 +22,7 @@ class RecommenderService
         $shrink         = 5;    // penaliza solapes pequeños
         $minSimilarity  = 0.25; // umbral mínimo de similitud 
 
-        // 1) Si tiene pocos ratings, limpia (cualquier similitud es ruido y además evita similitudes viejas)
+        // 1) Si tiene pocos ratings, borra (evita ruido y similitudes viejas)
         $count = DB::table('ratings')->where('user_id', $userA)->count();
         if ($count < $minRatings) {
             DB::table('similarities')->where('user_a_id', $userA)->delete();
@@ -91,7 +91,7 @@ class RecommenderService
             'updated_at'   => $now,
         ], $rows);
 
-        // 3) Si no hay candidatos, limpia
+        // 3) Si no hay candidatos, borra
         if (empty($upserts)) {
             DB::table('similarities')->where('user_a_id', $userA)->delete();
             return;
@@ -112,37 +112,82 @@ class RecommenderService
     }
 
     /**
-     * Recalcula recomendaciones para un usuario y guarda un TOP N en la tabla recommendations.
+     * Recalcula y guarda recomendaciones de juegos para un usuario.
      *
-     * Vías que mezcla:
-     *  1) VECINOS: usuarios similares han puntuado alto el juego (y el usuario aún no lo ha visto)
-     *  2) ASPECTS: al usuario le suelen gustar juegos con X aspectos altos (story, gameplay,...)
-     *  3) TAG/GENRE: al usuario le suelen gustar juegos con ciertos tags/géneros
+     * Recomienda juegos combinando 3 señales:
+     *   1) VECINOS ("collab"): usuarios similares han puntuado alto el juego.
+     *   2) TAXONOMÍA ("tax"): el juego contiene tags/genres que aparecer en los juegos bien puntuados por el usuario.
+     *   3) ASPECTS (solo apoyo): los juegos que bien puntuados suelen tener ciertos aspects altos (story, gameplay, etc).
+     *
+     * La idea es una recomendación mezclada con fallback: se prioriza que existan 2 señales (collab + tax),
+     * pero si falta una señal se permite recomendar con la otra.
+     * 
+     * Los 3 niveles (tiers) al construir el Top N son los siguientes:
+     *   1) tier1: collab + tax
+     *   2) tier2: solo collab
+     *   3) tier3: solo tax
+     *
+     * En cuanto a ASPECTS, no dejamos que empuje recomendaciones fuera de los géneros preferidos por el usuario (gating).
+     * Ejemplo: si al usuario le gusta historia (ASPECT) pero odia terror (GENRE), no potenciamos un juego de terror solo por tener buena historia.
      *
      */
     public function recomputeRecommendationsForUser(int $userId): void
     {
-        $minRatings = 5;     // no hay recomendaciones si el usuario tiene menos
-        $topN       = 50;    // cuántas recomendaciones guarda la tabla
-        $topCands   = 200;   // cuántos candidatos coge de cada vía
-        $likeScore  = 8;     // mínimo para considerarlo
+        $cfg = [
+            'minRatings' => 5,      // min de rating para empezar a recomendar
+            'topN'       => 60,     // cuántas recomendaciones guarda
+            'topCands'   => 200,    // cuántos candidatos coge por señal
+            'likeScore'  => 8,      // a partir de qué nota se considera "me gusta"
+            'wCollab'    => 0.70,   // pesos para mezclar las señales
+            'wAspect'    => 0.20,
+            'wTax'       => 0.10,
+            'topTags'    => 20,     // cuántos tags/genres favoritos considera
+            'topGenres'  => 15,
+            'minTaxN'    => 2,      // min de apariciones del tag/genre en juego (evita que un tag/genre aparezca por causalidad en un solo juego)
+            'minTaxForAspect' => 0.15,  // gating: si tax es menor, aspects no influye
+        ];
 
-        // 0) Si tiene pocos ratings, no hay base y limpia al usuario de la tabla
+        // Helpers para normalizar
+        $clamp01   = fn(float $x): float => max(0.0, min(1.0, $x)); // fuerza a [0..1]
+        $norm1to10 = fn($v): ?float => $v === null ? null : $clamp01((((float)$v) - 1.0) / 9.0); // convierte escala 1..10 a 0..1
+
+        // 1) Si tiene pocos ratings, borra (evita ruido y similitudes viejas)
         $count = DB::table('ratings')->where('user_id', $userId)->count();
-        if ($count < $minRatings) {
+        if ($count < $cfg['minRatings']) {
             DB::table('recommendations')->where('user_id', $userId)->delete();
             return;
         }
 
-        // 1) Excluye juegos ya puntuados o reseñados
-        $excluded = array_unique(array_merge(
-            DB::table('ratings')->where('user_id', $userId)->pluck('game_id')->all(),
-            DB::table('reviews')->where('user_id', $userId)->whereNull('deleted_at')->pluck('game_id')->all()
-        ));
-        $excludedSet = array_flip($excluded);
+        // 2) Excluye juegos ya puntuados o reseñados por el usuario
+        $excludedSet = (function () use ($userId) {
+            $rated = DB::table('ratings')->where('user_id', $userId)->pluck('game_id')->all();
+            $reviewed = DB::table('reviews')
+                ->where('user_id', $userId)
+                ->whereNull('deleted_at')
+                ->pluck('game_id')
+                ->all();
 
-        // 2) Vía VECINOS: similares + ratings altos
-        $sqlCollab = "
+            $all = array_values(array_unique(array_merge($rated, $reviewed)));
+            return array_fill_keys($all, true);
+        })();
+
+        // 2) Señal VECINOS
+        //    2.1) Coge ratings de usuarios similares:
+        //        - JOIN ratings r ON r.user_id = s.user_b_id
+        //
+        //    2.2) Solo cuenta si el vecino ha puntuado alto:
+        //        - WHERE r.score >= likeScore
+        //
+        //    2.3) Excluye juegos ya vistos por el usuario:
+        //        - r.game_id NOT IN
+        //
+        //    2.4) Se hace una media ponderada por similitud:
+        //        - collab = SUM(similarity * ((score-1)/9)) / SUM(similarity)
+        //
+        //    2.5) Se cuenta cuántos ratings de vecinos lo sustentan:
+        //        - COUNT(*) AS support
+        [$collabMap, $candsCollab] = (function () use ($userId, $cfg, $clamp01) {
+            $sql = "
             SELECT
                 r.game_id AS game_id,
                 (SUM(s.similarity * ((r.score - 1) / 9)) / NULLIF(SUM(s.similarity), 0)) AS collab_score,
@@ -158,25 +203,41 @@ class RecommenderService
               )
             GROUP BY r.game_id
             ORDER BY collab_score DESC, support DESC
-            LIMIT $topCands
+            LIMIT {$cfg['topCands']}
         ";
 
-        $collabRows = DB::select($sqlCollab, [$userId, $likeScore, $userId, $userId]);
+            $rows = DB::select($sql, [$userId, $cfg['likeScore'], $userId, $userId]);
 
-        $collabMap = [];
-        $candidateIds = [];
+            $map = [];
+            $cands = [];
+            foreach ($rows as $r) {
+                $gid = (int)$r->game_id;
+                $map[$gid] = [
+                    'score'   => $clamp01((float)$r->collab_score),
+                    'support' => (int)$r->support,
+                ];
+                $cands[] = $gid;
+            }
 
-        foreach ($collabRows as $r) {
-            $gid = (int) $r->game_id;
-            $collabMap[$gid] = [
-                'score'   => max(0, min(1, (float) $r->collab_score)),
-                'support' => (int) $r->support,
-            ];
-            $candidateIds[] = $gid;
-        }
+            return [$map, $cands];
+        })();
 
-        // 3) Vía ASPECTS: promedio de aspects de los juegos que puntúa alto
-        $sqlPrefs = "
+        // 3) Señal ASPECTS (solo reordena candidatos)
+        //    3.1) Mira solo juegos que el usuario puntúa alto:
+        //        - (>= likeScore).
+        //    3.2) Une con los aspects del juego:
+        //        - JOIN aspects a ON a.game_id = rt.game_id
+        //
+        //    3.3) Promedia cada aspecto en los juegos gustados:
+        //        - AVG(a.story_avg) AS story
+        //
+        //    3.4) Normaliza 1..10 a [0..1]:
+        //        - norm = (avg - 1) / 9
+        //
+        //    3.5) Convierte a pesos que suman 1 (importancia):
+        //        - w_k = norm_k / SUM(norm_k)
+        $prefs = (function () use ($userId, $cfg, $norm1to10) {
+            $sql = "
             SELECT
                 AVG(a.story_avg)       AS story,
                 AVG(a.gameplay_avg)    AS gameplay,
@@ -188,98 +249,133 @@ class RecommenderService
             WHERE rt.user_id = ?
               AND rt.score >= ?
         ";
-        $prefsRow = DB::select($sqlPrefs, [$userId, $likeScore]);
-        $prefsRow = $prefsRow[0] ?? null;
+            $row = DB::select($sql, [$userId, $cfg['likeScore']])[0] ?? null;
+            if (!$row) return [];
 
-        // Normaliza y convierte en pesos
-        $prefs = [];     // prefs = pesos que suman 1.0 (más peso = más importante ese aspecto)
-        if ($prefsRow) {
             $raw = [
-                'story'      => $prefsRow->story,
-                'gameplay'   => $prefsRow->gameplay,
-                'exploration' => $prefsRow->exploration,
-                'art'        => $prefsRow->art,
-                'difficulty' => $prefsRow->difficulty,
+                'story'       => $norm1to10($row->story),
+                'gameplay'    => $norm1to10($row->gameplay),
+                'exploration' => $norm1to10($row->exploration),
+                'art'         => $norm1to10($row->art),
+                'difficulty'  => $norm1to10($row->difficulty),
             ];
 
-            // normaliza cada aspecto 1..10 a 0..1
             $tmp = [];
             foreach ($raw as $k => $v) {
-                if ($v === null) continue;
-                $tmp[$k] = max(0.0, min(1.0, (((float)$v) - 1.0) / 9.0));
+                if ($v !== null) $tmp[$k] = $v;
             }
 
-            // convierte en pesos que sumen 1
             $sum = array_sum($tmp);
-            if ($sum > 0) {
-                foreach ($tmp as $k => $v) $prefs[$k] = $v / $sum;
-            }
-        }
+            if ($sum <= 0) return [];
 
-        // 4) Afinidades por TAG y GÉNERO: qué tags y géneros aparecen en los juegos que puntúa alto
-        $sqlTagAff = "
+            foreach ($tmp as $k => $v) $tmp[$k] = $v / $sum;
+            return $tmp;
+        })();
+
+        // 4) Señal TAGS/GÉNEROS
+        //    4.1) Afinidad por tag/genre:
+        //        - aff = AVG((score-1)/9)
+        //
+        //    4.2) Exige una evidencia mínima para que no sea un tag/genre que aparezca por casualidad:
+        //        - HAVING COUNT(*) >= minTaxN
+        //
+        //    4.3) Se cuentan las coincidencias (hits) y se ordena:
+        //        -  SELECT game_id, COUNT(*) hits ... GROUP BY game_id ORDER BY hits DESC
+        //        -  tags: HAVING hits >= 2; genres: HAVING hits >= 1
+        [$tagAff, $tagIds] = (function () use ($userId, $cfg, $clamp01) {
+            $sql = "
             SELECT gt.tag_id AS id, AVG((r.score - 1) / 9) AS aff, COUNT(*) AS n
             FROM ratings r
             JOIN game_tag gt ON gt.game_id = r.game_id
             WHERE r.user_id = ?
               AND r.score >= ?
             GROUP BY gt.tag_id
-            HAVING COUNT(*) >= 2
+            HAVING COUNT(*) >= {$cfg['minTaxN']}
             ORDER BY aff DESC, n DESC
-            LIMIT 20
+            LIMIT {$cfg['topTags']}
         ";
-        $tagRows = DB::select($sqlTagAff, [$userId, $likeScore]);
-        $tagAff = [];
-        $tagIds = [];
-        foreach ($tagRows as $t) {
-            $id = (int) $t->id;
-            $tagAff[$id] = max(0, min(1, (float) $t->aff));
-            $tagIds[] = $id;
-        }
+            $rows = DB::select($sql, [$userId, $cfg['likeScore']]);
 
-        $sqlGenreAff = "
+            $aff = [];
+            $ids = [];
+            foreach ($rows as $t) {
+                $id = (int)$t->id;
+                $aff[$id] = $clamp01((float)$t->aff);
+                $ids[] = $id;
+            }
+            return [$aff, $ids];
+        })();
+
+        [$genreAff, $genreIds] = (function () use ($userId, $cfg, $clamp01) {
+            $sql = "
             SELECT gg.genre_id AS id, AVG((r.score - 1) / 9) AS aff, COUNT(*) AS n
             FROM ratings r
             JOIN game_genre gg ON gg.game_id = r.game_id
             WHERE r.user_id = ?
               AND r.score >= ?
             GROUP BY gg.genre_id
-            HAVING COUNT(*) >= 2
+            HAVING COUNT(*) >= {$cfg['minTaxN']}
             ORDER BY aff DESC, n DESC
-            LIMIT 15
+            LIMIT {$cfg['topGenres']}
         ";
-        $genreRows = DB::select($sqlGenreAff, [$userId, $likeScore]);
-        $genreAff = [];
-        $genreIds = [];
-        foreach ($genreRows as $g) {
-            $id = (int) $g->id;
-            $genreAff[$id] = max(0, min(1, (float) $g->aff));
-            $genreIds[] = $id;
-        }
+            $rows = DB::select($sql, [$userId, $cfg['likeScore']]);
 
-        // Juegos que tengan esos tags/géneros top
+            $aff = [];
+            $ids = [];
+            foreach ($rows as $g) {
+                $id = (int)$g->id;
+                $aff[$id] = $clamp01((float)$g->aff);
+                $ids[] = $id;
+            }
+            return [$aff, $ids];
+        })();
+
+        // Recoge juegos con más coincidencias con los tags/genres top del usuario, ordenador por fuerza de coincidencia (hits)
+        $candsContent = [];
         if (!empty($tagIds)) {
-            $ids = DB::table('game_tag')->whereIn('tag_id', $tagIds)->limit($topCands)->pluck('game_id')->all();
-            $candidateIds = array_merge($candidateIds, $ids);
-        }
-        if (!empty($genreIds)) {
-            $ids = DB::table('game_genre')->whereIn('genre_id', $genreIds)->limit($topCands)->pluck('game_id')->all();
-            $candidateIds = array_merge($candidateIds, $ids);
+            $candsContent = array_merge(
+                $candsContent,
+                DB::table('game_tag')
+                    ->select('game_id', DB::raw('COUNT(*) as hits'))
+                    ->whereIn('tag_id', $tagIds)
+                    ->groupBy('game_id')
+                    ->havingRaw('COUNT(*) >= 2') // fuerza mínima por tags
+                    ->orderByDesc('hits')
+                    ->limit($cfg['topCands'])
+                    ->pluck('game_id')
+                    ->all()
+            );
         }
 
-        // Excluir juegos duplicados y vistos
-        $candidateIds = array_values(array_unique(array_filter($candidateIds, fn($gid) => !isset($excludedSet[$gid]))));
+        if (!empty($genreIds)) {
+            $candsContent = array_merge(
+                $candsContent,
+                DB::table('game_genre')
+                    ->select('game_id', DB::raw('COUNT(*) as hits'))
+                    ->whereIn('genre_id', $genreIds)
+                    ->groupBy('game_id')
+                    ->havingRaw('COUNT(*) >= 1') // genres son menos numerosos
+                    ->orderByDesc('hits')
+                    ->limit($cfg['topCands'])
+                    ->pluck('game_id')
+                    ->all()
+            );
+        }
+
+        // 5) Mezcla los candidatos de cada señal con fallback (por si una de ellas es nula)
+        $candidateIds = array_values(array_unique(array_merge($candsCollab, $candsContent)));
+        $candidateIds = array_values(array_filter(
+            $candidateIds,
+            fn($gid) => !isset($excludedSet[$gid])
+        ));
 
         if (empty($candidateIds)) {
             DB::table('recommendations')->where('user_id', $userId)->delete();
             return;
         }
 
-        // 5) Cargar datos de candidatos para puntuar: aspects, tags y genres
-        $aspectsRows = DB::table('aspects')
-            ->whereIn('game_id', $candidateIds)
-            ->get()
-            ->keyBy('game_id');
+        // 6) Carga los aspects, los tags y los genres de los juegos candidatos
+        $aspectsRows = DB::table('aspects')->whereIn('game_id', $candidateIds)->get()->keyBy('game_id');
 
         $gameTags = [];
         foreach (DB::table('game_tag')->whereIn('game_id', $candidateIds)->get(['game_id', 'tag_id']) as $r) {
@@ -291,31 +387,9 @@ class RecommenderService
             $gameGenres[(int)$r->game_id][] = (int)$r->genre_id;
         }
 
-        // HELPERS
-        $aspectScoreFn = function ($aRow) use ($prefs): ?float {
-            if (!$aRow || empty($prefs)) return null;
-
-            $map = [
-                'story'      => $aRow->story_avg,
-                'gameplay'   => $aRow->gameplay_avg,
-                'exploration' => $aRow->exploration_avg,
-                'art'        => $aRow->art_avg,
-                'difficulty' => $aRow->difficulty_avg,
-            ];
-
-            $num = 0.0;
-            $den = 0.0;
-            foreach ($prefs as $k => $w) {
-                $v = $map[$k] ?? null;
-                if ($v === null) continue;
-                $vNorm = max(0.0, min(1.0, (((float)$v) - 1.0) / 9.0));
-                $num += $w * $vNorm;
-                $den += $w;
-            }
-            return $den > 0 ? max(0.0, min(1.0, $num / $den)) : null;
-        };
-
-        $affScoreFn = function (array $ids, array $aff): ?float {
+        // 7) Helpers de scoring
+        // Media de afinidades del juego que esten entre las afinidades del usuario (si no comparte tags/genres favoritos devuelve null)
+        $avgAff = function (array $ids, array $aff) use ($clamp01): ?float {
             if (empty($ids) || empty($aff)) return null;
             $sum = 0.0;
             $n = 0;
@@ -324,90 +398,166 @@ class RecommenderService
                 $sum += (float)$aff[$id];
                 $n++;
             }
-            return $n > 0 ? max(0.0, min(1.0, $sum / $n)) : null;
+            return $n > 0 ? $clamp01($sum / $n) : null;
         };
 
-        // 6) Puntuar y guardar en el top 50
-        $rows = [];
+        // Promedia aspectos del juego usando las preferencias del usuario (si no hay preferencias o aspects devuelve null)
+        $aspectScore = function ($aRow) use ($prefs, $norm1to10, $clamp01): ?float {
+            if (!$aRow || empty($prefs)) return null;
 
-        foreach ($candidateIds as $gid) {
-            // Vía VECINOS
-            $collab = $collabMap[$gid]['score'] ?? null;
-            $support = $collabMap[$gid]['support'] ?? 0;
+            $map = [
+                'story'       => $aRow->story_avg,
+                'gameplay'    => $aRow->gameplay_avg,
+                'exploration' => $aRow->exploration_avg,
+                'art'         => $aRow->art_avg,
+                'difficulty'  => $aRow->difficulty_avg,
+            ];
 
-            // Vía ASPECTS
-            $aRow = $aspectsRows[$gid] ?? null;
-            $aspect = $aspectScoreFn($aRow);
+            $num = 0.0;
+            $den = 0.0;
+            foreach ($prefs as $k => $w) {
+                $v = $norm1to10($map[$k] ?? null);
+                if ($v === null) continue;
+                $num += $w * $v;
+                $den += $w;
+            }
+            return $den > 0 ? $clamp01($num / $den) : null;
+        };
 
-            // Vía TAGS/GENRES
-            $tagS   = $affScoreFn($gameTags[$gid] ?? [], $tagAff);
-            $genreS = $affScoreFn($gameGenres[$gid] ?? [], $genreAff);
-            $tg = null;
-            if ($tagS !== null || $genreS !== null) {
-                $tg = (($tagS ?? 0) + ($genreS ?? 0)) / (($tagS !== null ? 1 : 0) + ($genreS !== null ? 1 : 0));
+        // Combina señal de tag y genres y media las que existan (si no comparte tags/genres favoritos del usuario devuelve null)
+        $taxonomyScore = function (int $gid) use ($gameTags, $gameGenres, $tagAff, $genreAff, $avgAff, $clamp01): ?float {
+            $tagScore   = $avgAff($gameTags[$gid] ?? [], $tagAff);
+            $genreScore = $avgAff($gameGenres[$gid] ?? [], $genreAff);
+
+            if ($tagScore === null && $genreScore === null) return null;
+
+            $sum = 0.0;
+            $n = 0;
+            if ($tagScore !== null) {
+                $sum += $tagScore;
+                $n++;
+            }
+            if ($genreScore !== null) {
+                $sum += $genreScore;
+                $n++;
             }
 
-            // Mezcla final
+            return $clamp01($sum / $n);
+        };
+
+        // 8) Scoring final
+        $tier1 = []; // collab + tax 
+        $tier2 = []; // solo collab 
+        $tier3 = []; // solo tax
+
+        foreach ($candidateIds as $gid) {
+            // Señal de VECINOS
+            $collab  = $collabMap[$gid]['score'] ?? null; // 0..1 o null
+            $support = $collabMap[$gid]['support'] ?? 0; // nº de vecinos
+
+            // Señal de TAXONOMÍAS
+            $tax  = $taxonomyScore((int)$gid); // 0..1 o null
+
+            // Señal de ASPECTS (gateada)
+            $aRow = $aspectsRows[$gid] ?? null;
+            // Si no hay taxonomía mínima, no deja que aspects influya
+            // Por ejemplo: Si al usuario le gustan los juegos con historia (aspect) pero odia los juegos de terror (tag/genre), no queremos un juego de terror en recomendaciones por muy buena historia que tenga
+            $aspect = null;
+            if ($tax !== null && $tax >= $cfg['minTaxForAspect']) {
+                $aspect = $aspectScore($aRow);
+            }
+
+            // Decide tier
+            if ($collab !== null && $tax !== null) {
+                $tier = 1; // mezcla ideal
+            } elseif ($collab !== null) {
+                $tier = 2; // vecinos
+            } elseif ($tax !== null) {
+                $tier = 3; // contenido
+            } else {
+                continue; // no hay señales
+            }
+
+            // Mezcla de señales con pesos: solo suma el peso si la señal no es null y vuelve a normalizar dividiendo por la suma de pesos usados (así, si falta una señal, el score sigue 0..1 y es comparable)
             $num = 0.0;
             $den = 0.0;
 
             if ($collab !== null) {
-                $num += 0.70 * $collab;
-                $den += 0.70;
+                $num += $cfg['wCollab'] * $collab;
+                $den += $cfg['wCollab'];
             }
             if ($aspect !== null) {
-                $num += 0.20 * $aspect;
-                $den += 0.20;
+                $num += $cfg['wAspect'] * $aspect;
+                $den += $cfg['wAspect'];
             }
-            if ($tg !== null) {
-                $num += 0.10 * $tg;
-                $den += 0.10;
+            if ($tax !== null) {
+                $num += $cfg['wTax']    * $tax;
+                $den += $cfg['wTax'];
             }
 
-            if ($den <= 0) continue; // si no aplica ninguna vía, no hay recomendaciones
+            if ($den <= 0) continue;
 
-            $final = max(0.0, min(1.0, $num / $den));
+            $final = $clamp01($num / $den);
 
-            // Guarda el por qué de las recomendaciones (la VÍA)
+            // Guarda el desglose de señales en JSON para tener un manejar de dónde viene el peso de la recomendación
             $reason = [
-                'collab' => $collab,
+                'tier'              => $tier, // opcional
+                'collab'            => $collab,
                 'support_neighbors' => $support,
-                'aspect' => $aspect,
-                'tag_genre' => $tg,
+                'aspect'            => $aspect,
+                'tag_genre'         => $tax,
             ];
 
-            $rows[] = [
-                'user_id' => $userId,
-                'game_id' => $gid,
-                'score'   => $final,
-                'reason'  => json_encode($reason),
+            $row = [
+                'user_id'    => $userId,
+                'game_id'    => (int)$gid,
+                'score'      => $final,
+                'reason'     => json_encode($reason),
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
+
+            if ($tier === 1)      $tier1[] = $row;
+            elseif ($tier === 2)  $tier2[] = $row;
+            else                  $tier3[] = $row;
         }
 
-        // Borra al usuario de la tabla si no ha salido nada
-        if (empty($rows)) {
+        // Si no sale nada, borra
+        if (empty($tier1) && empty($tier2) && empty($tier3)) {
             DB::table('recommendations')->where('user_id', $userId)->delete();
             return;
         }
 
-        // Ordena por score descendente y recorta top 50
-        usort($rows, fn($a, $b) => $b['score'] <=> $a['score']);
-        $rows = array_slice($rows, 0, $topN);
+        // Ordena internamente cada tier por score descendente
+        $sortDesc = fn($a, $b) => $b['score'] <=> $a['score'];
+        usort($tier1, $sortDesc);
+        usort($tier2, $sortDesc);
+        usort($tier3, $sortDesc);
 
-        // upsert de una fila por usuario y juego
-        DB::table('recommendations')->upsert(
-            $rows,
-            ['user_id', 'game_id'],
-            ['score', 'reason', 'updated_at']
-        );
+        // Construye el Top N con prioridad por tiers
+        $rows = [];
+        $need = $cfg['topN'];
 
-        // Borra recomendaciones viejas y deja solo las actuales del top
-        $keepIds = array_column($rows, 'game_id');
-        DB::table('recommendations')
-            ->where('user_id', $userId)
-            ->whereNotIn('game_id', $keepIds)
-            ->delete();
+        $take = array_slice($tier1, 0, $need);
+        $rows = array_merge($rows, $take);
+        $need -= count($take);
+
+        if ($need > 0) {
+            $take = array_slice($tier2, 0, $need);
+            $rows = array_merge($rows, $take);
+            $need -= count($take);
+        }
+
+        if ($need > 0) {
+            $take = array_slice($tier3, 0, $need);
+            $rows = array_merge($rows, $take);
+        }
+
+        // Se borran las recomendaciones previas del usuario y se inserta el nuevo Top N
+        DB::transaction(function () use ($userId, $rows) {
+            DB::table('recommendations')->where('user_id', $userId)->delete();
+            DB::table('recommendations')->insert($rows);
+        });
     }
+
 }
