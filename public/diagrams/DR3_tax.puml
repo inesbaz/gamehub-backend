@@ -1,0 +1,126 @@
+@startuml
+title Diagrama Relacional 03 - Taxonomías (BD real)
+top to bottom direction
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam nodesep 60
+skinparam ranksep 70
+
+package "Taxonomías" {
+
+  entity "games (stub)" as games {
+    * id : bigint
+    --
+    slug : varchar(255)
+  }
+
+  entity "genres" as genres {
+    * id : bigint
+    --
+    external_id : bigint
+    slug : varchar(255)
+    name : varchar(255)
+    last_synced_at : timestamp
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    UQ slug
+    UQ name
+    UQ external_id
+  }
+
+  entity "tags" as tags {
+    * id : bigint
+    --
+    external_id : bigint
+    slug : varchar(255)
+    name : varchar(255)
+    last_synced_at : timestamp
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    UQ slug
+    UQ name
+    UQ external_id
+  }
+
+  entity "platforms" as platforms {
+    * id : bigint
+    --
+    external_id : bigint
+    slug : varchar(255)
+    name : varchar(255)
+    last_synced_at : timestamp
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    UQ slug
+    UQ name
+    UQ external_id
+  }
+
+  entity "stores" as stores {
+    * id : bigint
+    --
+    external_id : bigint
+    slug : varchar(255)
+    name : varchar(255)
+    last_synced_at : timestamp
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    UQ slug
+    UQ name
+    UQ external_id
+  }
+
+  entity "game_genre" as game_genre {
+    * game_id : bigint <<FK games.id>>
+    * genre_id : bigint <<FK genres.id>>
+    --
+    PK (game_id, genre_id)
+    IDX genre_id
+  }
+
+  entity "game_tag" as game_tag {
+    * game_id : bigint <<FK games.id>>
+    * tag_id : bigint <<FK tags.id>>
+    --
+    PK (game_id, tag_id)
+    IDX tag_id
+  }
+
+  entity "game_platform" as game_platform {
+    * game_id : bigint <<FK games.id>>
+    * platform_id : bigint <<FK platforms.id>>
+    --
+    PK (game_id, platform_id)
+    IDX platform_id
+  }
+
+  entity "game_store" as game_store {
+    * game_id : bigint <<FK games.id>>
+    * store_id : bigint <<FK stores.id>>
+    --
+    url : varchar(255)
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    UQ (game_id, store_id)
+    IDX store_id
+  }
+}
+
+games ||--o{ game_genre
+genres ||--o{ game_genre
+
+games ||--o{ game_tag
+tags ||--o{ game_tag
+
+games ||--o{ game_platform
+platforms ||--o{ game_platform
+
+games ||--o{ game_store
+stores ||--o{ game_store
+
+@enduml

@@ -1,0 +1,48 @@
+@startuml
+title Arquitectura (nivel intermedio)
+top to bottom direction
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam linetype ortho
+skinparam nodesep 25
+skinparam ranksep 25
+
+actor "Usuario" as U
+
+rectangle "Frontend (SPA)\nReact" as FE {
+  [UI\nPages + Components] as UI
+  [Sesión\n(useUser)] as Hook
+  [Cliente API\n(lib/api.js)] as ApiClient
+
+  UI --> Hook
+  Hook --> ApiClient
+}
+
+rectangle "Backend\nLaravel API" as BE {
+  [Rutas\n(routes/api.php)] as Routes
+  [Middleware\n(Sanctum)] as MW
+  [Controladores\n(Controllers)] as Ctrls
+  [Servicios\n(app/Services)] as Svcs
+  [Modelos ORM\n(app/Models)] as Models
+  [Comandos\n(Commands)] as Cmds
+
+  Routes --> MW
+  MW --> Ctrls
+  Routes --> Ctrls
+  Ctrls --> Svcs
+  Svcs --> Models
+}
+
+database "MySQL" as DB
+cloud "RAWG API" as RAWG
+folder "Storage\npublic/storage" as FS
+
+U --> UI
+
+ApiClient --> Routes : HTTP JSON + credenciales/CSRF
+Models --> DB : Eloquent/SQL
+Svcs --> RAWG : HTTP\nimport/sync
+Svcs --> FS : media
+Cmds --> Svcs : batch
+
+@enduml

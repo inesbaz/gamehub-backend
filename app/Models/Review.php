@@ -40,7 +40,6 @@ class Review extends Model
     public function emotions()
     {
         return $this->belongsToMany(Emotion::class, 'review_emotion')
-            ->withPivot('intensity')
             ->withTimestamps();
     }
 

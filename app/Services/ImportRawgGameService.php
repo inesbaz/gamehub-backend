@@ -17,22 +17,28 @@ use Illuminate\Support\Str;
 
 /*
 *
-* Dada la slug o id de RAWG, trae el detalle y lo vuelca en la base de datos: juego + géneros + plataformas (+ requisitos PC) + tiendas (+ URL pivot) + tags + screenshots + trailer.
+* Trae el detalle de un juego por id o slug y lo vuelca en la base de datos:
+* juego, géneros, plataformas (con requisitos PC), tiendas, tags, screenshots y trailer.
 *
 * Convierte el JSON completo de RAWG en un modelo de Laravel.
 *
 */
-
 class ImportRawgGameService
 {
-    // Inyecta el cliente de RAWG (clase que hace las peticiones HTTP)
+    // Inyecta el cliente de RAWG, que hace las peticiones HTTP
     public function __construct(private RawgClient $rawg) {}
 
-    // Importa un juego de RAWG por su slug o id numérico (lo crea o lo actualiza si ya existe en la BD)
+    // Importa un juego de RAWG por su slug o id (lo crea o lo actualiza si ya existe en la BD)
     public function importBySlugOrId(string|int $idOrSlug): Game
     {
-        // Llamada al cliente RAWG que devuelve un array con todos los datos del juego
+        // Llama al cliente RAWG que devuelve un array con todos los datos del juego
         $payload = $this->rawg->getGameByIdOrSlug($idOrSlug);
+        $payloadEs = $this->rawg->getGameByIdOrSlug($idOrSlug, 'es');
+
+        $summaryEs = trim((string)($payloadEs['description_raw'] ?? ''));
+        if ($summaryEs === '') {
+            $summaryEs = null;
+        }
 
         $extId   = $payload['id'] ?? null;
 
@@ -48,11 +54,10 @@ class ImportRawgGameService
         }
 
         // Se usa una transacción para que no quede nada a medias si algo falla
-        return DB::transaction(function () use ($payload, $screenshotsResults, $moviesResults) {
+        return DB::transaction(function () use ($payload, $screenshotsResults, $moviesResults, $summaryEs) {
             $extId   = $payload['id'] ?? null;
             $extSlug = $payload['slug'] ?? null;
 
-            // updateOrCreate evita duplicados: si existe por external_id, lo actualiza
             $game = Game::updateOrCreate(
                 ['external_id' => $extId],
                 [
@@ -60,6 +65,7 @@ class ImportRawgGameService
                     'title'               => $payload['name'] ?? '',
                     'slug'                => $this->slugForLocal($payload),
                     'summary'             => $payload['description_raw'] ?? null,
+                    'summary_es'          => $summaryEs ?? DB::raw('summary_es'),
                     'official_website'    => $payload['website'] ?? null,
                     'release_date'        => $payload['released'] ?? null,
                     'rawg_updated_at'     => isset($payload['updated']) ? Carbon::parse($payload['updated']) : null,
@@ -77,7 +83,7 @@ class ImportRawgGameService
                 ]
             );
 
-            // 1) Géneros (pivot)
+            // Géneros
             foreach (($payload['genres'] ?? []) as $g) {
                 $genre = Genre::updateOrCreate(
                     ['external_id' => $g['id'] ?? null],
@@ -86,7 +92,7 @@ class ImportRawgGameService
                 $game->genres()->syncWithoutDetaching([$genre->id]);
             }
 
-            // 2) Plataformas (pivot)
+            // Plataformas
             $platformRefs = $payload['platforms'] ?? [];
             foreach ($platformRefs as $pRef) {
                 $pData = $pRef['platform'] ?? null;
@@ -98,7 +104,7 @@ class ImportRawgGameService
                 );
                 $game->platforms()->syncWithoutDetaching([$platform->id]);
 
-                // 3) Requisitos
+                // Requisitos
                 $req = $pRef['requirements'] ?? $pRef['requirements_en'] ?? null;
                 if ($req && $this->isPcPlatform($platform)) {
                     Requirement::updateOrCreate(
@@ -108,7 +114,7 @@ class ImportRawgGameService
                 }
             }
 
-            // 4) Tiendas (pivot con URL)
+            // Tiendas
             foreach (($payload['stores'] ?? []) as $s) {
                 $storeData = $s['store'] ?? null;
                 if (!$storeData) continue;
@@ -124,7 +130,7 @@ class ImportRawgGameService
                 ]);
             }
 
-            // 5) Tags (pivot)
+            // Tags
             foreach (($payload['tags'] ?? []) as $t) {
                 $tag = Tag::updateOrCreate(
                     ['external_id' => $t['id'] ?? null],
@@ -133,7 +139,7 @@ class ImportRawgGameService
                 $game->tags()->syncWithoutDetaching([$tag->id]);
             }
 
-            // 6) Screenshots (desde /games/{id}/screenshots)
+            // Screenshots (desde /games/{id}/screenshots)
             Screenshot::where('game_id', $game->id)->delete();
 
             foreach ($screenshotsResults as $i => $shot) {
@@ -147,7 +153,7 @@ class ImportRawgGameService
                 $game->save();
             }
 
-            // 7) Trailers (desde /games/{id}/movies)
+            // Trailers (desde /games/{id}/movies)
             Trailer::where('game_id', $game->id)->delete();
 
             foreach ($moviesResults as $i => $movie) {
@@ -186,7 +192,7 @@ class ImportRawgGameService
         return $rawgSlug ? $rawgSlug : Str::slug(($payload['name'] ?? 'game') . '-' . ($payload['id'] ?? Str::random(6)));
     }
 
-    // Comprueba si una plataforma corresponde a PC/Windows (para saber si hay que guardar los requisitos técnicos)
+    // Comprueba si una plataforma corresponde a PC para saber si hay que guardar los requisitos técnicos
     private function isPcPlatform(Platform $p): bool
     {
         $slug = strtolower($p->slug ?? '');

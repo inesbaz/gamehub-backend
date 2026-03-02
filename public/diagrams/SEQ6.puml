@@ -1,0 +1,22 @@
+@startuml
+title Secuencia - Like (toggle)
+skinparam shadowing false
+
+actor Usuario as U
+participant "Frontend (React)" as FE
+participant "API (Laravel)" as BE
+database "MySQL" as DB
+
+U -> FE : click Like
+FE -> BE : POST /api/like {entity_type, entity_id}
+BE -> DB : SELECT likes WHERE (user_id, entity_type, entity_id)
+
+alt no existe
+  BE -> DB : INSERT likes
+  BE --> FE : 201 + likes_count
+else existe
+  BE -> DB : DELETE likes
+  BE --> FE : 200 + likes_count
+end
+
+@enduml

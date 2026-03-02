@@ -1,0 +1,39 @@
+@startchen
+title Diagrama E/R - Taxonomías
+
+entity "games" as GAME {
+}
+
+entity "genres" as GENRE {
+}
+
+entity "tags" as TAG {
+}
+
+entity "platforms" as PLATFORM {
+}
+
+entity "stores" as STORE {
+}
+
+relationship "game_genre" as GAME_GENRE {
+}
+GAME_GENRE -(N,M)- GAME
+GAME_GENRE -(N,M)- GENRE
+
+relationship "game_tag" as GAME_TAG {
+}
+GAME_TAG -(N,M)- GAME
+GAME_TAG -(N,M)- TAG
+
+relationship "game_platform" as GAME_PLATFORM {
+}
+GAME_PLATFORM -(N,M)- GAME
+GAME_PLATFORM -(N,M)- PLATFORM
+
+relationship "game_store" as GAME_STORE {
+}
+GAME_STORE -(N,M)- GAME
+GAME_STORE -(N,M)- STORE
+
+@endchen

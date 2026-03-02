@@ -8,24 +8,33 @@ use Illuminate\Http\Request;
 
 class SearchController extends Controller
 {
-    // Recibe la query y cachea la respuesta (la guarda en caché) para que las búquedas repetidas sean insantáneas y reducir llamadas a la API
+    /* BUSCADOR SIMPLE */
+
+    /**
+     * Recibe la query y guarda la respuesta en caché para reducir llamadas a la API.
+     */
     public function search(Request $request, RawgClient $rawg)
     {
         // Obtiene el texto y la página
         $query = trim($request->get('q', ''));
         $page = (int)$request->get('page', 1);
 
-        // Si no llega la query, responde con un 422 (faltan datos)
+        // Si no llega la query, responde con un 422
         abort_if($query === '', 422, 'q is required');
 
-        // Se construye una clave de caché que depende del texto y de la página
-        $key = "rawg:search:{$query}:{$page}";
+        // límites básicos
+        $page = max(1, $page);
+        $query = mb_substr($query, 0, 120);
 
-        // Tiempo para conservar el resultado en caché (por defecto, 6 horas)
-        $ttl = (int)config('services.rawg.cache_ttl', 21600);
+        // Tiempo para conservar el resultado en caché (6 horas por defecto)
+        $ttl = (int) config('services.rawg.cache_ttl', 21600);
+
+        // Construye una clave de caché que depende del texto y de la página
+        $key = "rawg:search:{$query}:{$page}";
 
         // Si no existe la clave en caché, llama a RAWG, guarda el resultado y lo devuelve
         $data = Cache::remember($key, $ttl, fn() => $rawg->searchGames($query, $page));
+
         return response()->json($data);
     }
 }

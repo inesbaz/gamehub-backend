@@ -1,0 +1,28 @@
+@startuml
+title Secuencia - Crear reseña (POST /api/games/{slug}/review)
+skinparam shadowing false
+
+actor Usuario as U
+participant "Frontend (React)\nModal/Detail" as FE
+participant "API (Laravel)\nGameController@storeReview" as BE
+database "MySQL" as DB
+
+U -> FE : Guardar reseña
+FE -> BE : POST /api/games/{slug}/review {datos}
+
+BE -> DB : Comprobar usuario autenticado
+BE -> DB : Buscar juego (o importar si falta)
+
+BE -> BE : Validar datos (title/body, flags, emotions, scores)
+BE -> DB : Comprobar si ya existe reseña del usuario
+
+alt Ya existe reseña activa
+  BE --> FE : 409 (conflicto)
+else OK
+  BE -> DB : Transacción: guardar review\nsync emociones\nupsert aspectos\nrecalcular medias
+  BE --> FE : 201/200 {review}
+end
+
+FE -> FE : Actualizar UI (lista/reseña)
+
+@enduml

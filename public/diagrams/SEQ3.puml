@@ -1,0 +1,26 @@
+@startuml
+title Secuencia - Ver ficha de juego (GET /api/games/{slug})
+skinparam shadowing false
+
+actor Usuario as U
+participant "Frontend (React)\nGameDetail.jsx" as FE
+participant "API (Laravel)\nGameController@show" as BE
+database "MySQL" as DB
+participant "RAWG API" as RAWG
+
+U -> FE : Entra en ficha del juego
+FE -> BE : GET /api/games/{slug}
+
+BE -> DB : Buscar juego por slug/external
+
+alt No existe en BD
+  BE -> RAWG : Pedir detalle + media (vía ImportRawgGameService)
+  RAWG --> BE : JSON del juego
+  BE -> DB : Guardar/actualizar juego + relaciones
+end
+
+BE -> DB : Cargar relaciones + calcular stats/resumen
+BE --> FE : 200 Game (con stats y me-data)
+FE -> FE : Renderizar ficha
+
+@enduml

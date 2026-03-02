@@ -16,10 +16,23 @@ class Emotion extends Model
         'slug',
     ];
 
+    protected $appends = ['display_name'];
+
     public function reviews()
     {
         return $this->belongsToMany(Review::class, 'review_emotion')
-                    ->withPivot('intensity')
-                    ->withTimestamps();
+            ->withTimestamps();
+    }
+
+    /**
+     * Devuelve el nombre a mostrar (display_name).
+     * Usa la traducción por slug si existe en la carpeta lang.
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        $key = 'emotions.' . $this->slug;
+        $t = __($key);
+
+        return $t === $key ? $this->name : $t;
     }
 }

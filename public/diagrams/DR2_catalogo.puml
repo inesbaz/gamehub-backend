@@ -1,0 +1,120 @@
+@startuml
+title Diagrama Relacional 02 - Catálogo
+top to bottom direction
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam nodesep 60
+skinparam ranksep 70
+
+package "Catálogo" {
+
+  entity "games" as games {
+    * id : bigint
+    --
+    external_id : bigint
+    external_slug : varchar(255)
+    last_synced_at : timestamp
+    title : varchar(255)
+    slug : varchar(255)
+    summary : longtext
+    summary_es : text
+    official_website : varchar(255)
+    release_date : date
+    rawg_updated_at : timestamp
+    avg_playtime_hours : smallint
+    cover_url : varchar(255)
+    cover_thumb_url : varchar(255)
+    has_trailers : tinyint(1)
+    has_screenshots : tinyint(1)
+    rawg_rating_avg : decimal(3,1)
+    rawg_rating_count : int unsigned
+    metacritic : tinyint unsigned
+    metacritic_url : varchar(255)
+    esrb_rating : varchar(20)
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    UQ slug
+    UQ external_id
+    IDX external_slug
+  }
+
+  entity "screenshots" as screenshots {
+    * id : bigint
+    --
+    game_id : bigint <<FK games.id>>
+    external_id : bigint
+    image_url : varchar(255)
+    width : int
+    height : int
+    ordering : smallint unsigned
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    IDX game_id
+    IDX external_id
+  }
+
+  entity "trailers" as trailers {
+    * id : bigint
+    --
+    game_id : bigint <<FK games.id>>
+    external_id : bigint
+    name : varchar(255)
+    preview_image : varchar(255)
+    video_url : varchar(255)
+    ordering : smallint unsigned
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    IDX game_id
+    IDX external_id
+  }
+
+  entity "requirements" as requirements {
+    * id : bigint
+    --
+    game_id : bigint <<FK games.id>>
+    platform_id : bigint <<FK platforms.id>>
+    minimum : text
+    recommended : text
+    source : varchar(20)
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    UQ (game_id, platform_id)
+    IDX platform_id
+  }
+
+  entity "aspects" as aspects {
+    * id : bigint
+    --
+    game_id : bigint <<FK games.id>>
+    story_avg : decimal(4,2)
+    gameplay_avg : decimal(4,2)
+    exploration_avg : decimal(4,2)
+    art_avg : decimal(4,2)
+    difficulty_avg : decimal(4,2)
+    reviews_count : int unsigned
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    UQ game_id
+  }
+
+  ' Stub mínimo para enlazar platform_id
+  entity "platforms (stub)" as platforms_stub {
+    * id : bigint
+    --
+    slug : varchar(255)
+  }
+}
+
+games ||--o{ screenshots
+games ||--o{ trailers
+games ||--o| aspects
+
+games ||--o{ requirements
+platforms_stub ||--o{ requirements
+
+@enduml

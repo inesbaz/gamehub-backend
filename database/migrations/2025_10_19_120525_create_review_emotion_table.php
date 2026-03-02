@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('review_emotion', function (Blueprint $table) {
             $table->foreignId('review_id')->constrained()->cascadeOnDelete();
             $table->foreignId('emotion_id')->constrained('emotions')->cascadeOnDelete();
-            $table->tinyInteger('intensity')->nullable(); // 1–5 (opcional)
+            $table->tinyInteger('intensity')->nullable();
             
             $table->timestamps();
             $table->primary(['review_id','emotion_id']);

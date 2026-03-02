@@ -11,15 +11,13 @@ class Game extends Model
 
     protected $table = 'games';
 
-    // ─────────────────────────────────────────────
-    // Atributos
-    // ─────────────────────────────────────────────
     protected $fillable = [
         'external_id',
         'external_slug',
         'title',
         'slug',
         'summary',
+        'summary_es',
         'official_website',
         'release_date',
         'rawg_updated_at',

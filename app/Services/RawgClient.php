@@ -5,16 +5,16 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 
 /*
-* Centraliza las llamadas HTTP a RAWG (búsquedas, detalle de juego, listados de plataformas, géneros, tiendas).
-*
-* Lee la URL base, API key y page_size de config. El get() hace la petición con timeout(15), retry(2, 500) y devuelve el JSON 
-* ya parseado. Si RAWG devuelve error, lanza excepción.
-*
-* Varios métodos públicos y para sincronizar catálogos. Permite separar la lógica HTTP del resto del código 
+* Centraliza las llamadas HTTP a RAWG, permitiendo separar la lógica HTTP del resto del código 
 * (proveedor de cliente).
 *
+* Lee la URL base, API key y page_size de config. 
+* El get() hace la petición con timeout(15), retry(2, 500) y devuelve el JSON ya parseado. 
+* Si RAWG devuelve error, lanza excepción.
+*
+* Incluye varios métodos públicos y para sincronizar catálogos. 
+*
 */
-
 class RawgClient
 {
     public function __construct(
@@ -50,10 +50,12 @@ class RawgClient
         ]);
     }
 
-    // Detalle de juego (para lazy import) 
-    public function getGameByIdOrSlug(string|int $idOrSlug)
+    // Detalle de juego 
+    public function getGameByIdOrSlug(string|int $idOrSlug, ?string $lang = null)
     {
-        return $this->get("games/{$idOrSlug}");
+        return $this->get("games/{$idOrSlug}", [
+            'lang' => $lang,
+        ]);
     }
 
     // Imágenes del juego (screenshots)
@@ -65,7 +67,7 @@ class RawgClient
         ]);
     }
 
-    // Vídeos del juego (trailers / movies)
+    // Vídeos del juego (trailers)
     public function getGameMovies(int $externalId): array
     {
         return $this->get("games/{$externalId}/movies");

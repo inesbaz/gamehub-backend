@@ -5,14 +5,17 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 
 class AuthController extends Controller
 {
-    // POST /login
+    /*
+     * Login de usuarios.
+     */
     public function login(Request $request)
     {
         $data = $request->validate([
-            'login'    => ['required', 'string'], // puede ser email o username
+            'login'    => ['required', 'string'],
             'password' => ['required', 'string'],
         ]);
 
@@ -23,15 +26,17 @@ class AuthController extends Controller
             // Devuelve credenciales inválidas
             return response()->json(['message' => 'Credenciales incorrectas'], 422);
         }
-        
-        // Cambia el ID de sesión tras un login correcto
+
+        // Cambia el id de sesión tras un login correcto
         $request->session()->regenerate();
 
         // Devuelve el usuario autenticado serializado a JSON
         return response()->json(['user' => $request->user()]);
     }
 
-    // POST /register
+    /*
+     * Registro de usuarios.
+     */
     public function register(Request $request)
     {
         $minBirthdate = now()->subYears(13)->toDateString();
@@ -46,7 +51,7 @@ class AuthController extends Controller
             'birthdate'             => ['nullable', 'date', 'before_or_equal:' . $minBirthdate],
         ]);
 
-        $user = \App\Models\User::create([
+        $user = User::create([
             'name'       => $data['name'],
             'username'   => $data['username'],
             'email'      => $data['email'],
@@ -56,14 +61,16 @@ class AuthController extends Controller
             'birthdate'  => $data['birthdate'] ?? null,
         ]);
 
-        // Autologin
+        // Autologin tras el registro
         Auth::login($user);
         $request->session()->regenerate();
 
         return response()->json(['user' => $user], 201);
     }
 
-    // POST /logout
+    /*
+     * Logout del usuario.
+     */
     public function logout(Request $request)
     {
         Auth::guard('web')->logout();
@@ -72,11 +79,13 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        // Si todo sale bien, no se envían datos
+        // Si todo sale bien no se envían datos
         return response()->noContent();
     }
 
-    // GET /api/me
+    /*
+     * Devuelve el usuario.
+     */
     public function me(Request $request)
     {
         return response()->json($request->user());

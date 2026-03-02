@@ -10,15 +10,12 @@ class AspectService
     /**
      * Recalcula el resumen de aspectos para un juego.
      *
-     * - 'review_aspect' guarda las puntuaciones por review (1–10, nullable).
+     * - 'review_aspect' guarda las puntuaciones por review.
      * 
-     * - Para calcular las medias usamos AVG (ignora NULL), por lo que solo promedian
-     *   las reviews que puntuan cada aspecto.
-     * 
+     * - Para calcular las medias usa AVG (ignora null), por lo que solo promedian las reviews que puntuan cada aspecto.
      *   Ejemplo: si una review solo puntúa art y difficulty, no afecta a story.
      *
-     * - Si el usuario no puntúa ningún aspecto (toda la fila NULL),
-     *   esa review no cuenta.
+     * - Si el usuario no puntúa ningún aspecto (toda la fila null), esa review no cuenta.
      *
      */
     public function recomputeGameAspects(int $gameId): void

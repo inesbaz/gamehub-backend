@@ -1,0 +1,45 @@
+@startchen
+title Diagrama E/R - Social
+
+entity "users" as USER {
+}
+
+entity "posts" as POST {
+}
+
+entity "comments" as COMMENT {
+}
+
+relationship "publica" as PUBLISHES {
+}
+PUBLISHES -1- USER
+PUBLISHES -N- POST
+
+relationship "escribe_comentario" as WRITES_COMMENT {
+}
+WRITES_COMMENT -1- USER
+WRITES_COMMENT -N- COMMENT
+
+relationship "en_post" as ON_POST {
+}
+ON_POST -1- POST
+ON_POST -N- COMMENT
+
+relationship "sigue (follows)" as FOLLOWS {
+}
+FOLLOWS -(N,M)- USER
+FOLLOWS -(N,M)- USER
+
+' Likes en BD son polimórficos (entity_type + entity_id).
+' En Chen lo representamos como relaciones conceptuales para entenderlo.
+relationship "like_post" as LIKE_POST {
+}
+LIKE_POST -(N,M)- USER
+LIKE_POST -(N,M)- POST
+
+relationship "like_comment" as LIKE_COMMENT {
+}
+LIKE_COMMENT -(N,M)- USER
+LIKE_COMMENT -(N,M)- COMMENT
+
+@endchen

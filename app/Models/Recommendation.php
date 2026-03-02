@@ -20,7 +20,7 @@ class Recommendation extends Model
 
     protected $casts = [
         'score'  => 'decimal:4',
-        'reason' => 'array', // JSON -> array asociativo
+        'reason' => 'array', // JSON
     ];
 
     public function user()

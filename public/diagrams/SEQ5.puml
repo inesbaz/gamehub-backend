@@ -1,0 +1,27 @@
+@startuml
+title Secuencia - Like/Unlike (toggleLike)
+skinparam shadowing false
+
+actor Usuario as U
+participant "Frontend (React)" as FE
+participant "API (Laravel)\nSocialController@toggleLike" as BE
+database "MySQL" as DB
+
+U -> FE : Click Like
+FE -> BE : POST /api/like {type, id}
+
+BE -> DB : Verificar autenticación
+BE -> DB : Verificar entidad existe (post/review/comment)
+
+BE -> DB : Buscar like (user + entity)
+alt No existe
+  BE -> DB : Insert like
+else Existe
+  BE -> DB : Delete like
+end
+
+BE -> DB : Contar likes
+BE --> FE : 200 {liked_by_me, likes_count}
+FE -> FE : Actualizar contador/estado
+
+@enduml

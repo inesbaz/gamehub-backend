@@ -1,0 +1,39 @@
+@startuml
+title Arquitectura (nivel alto + componentes principales)
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+actor Usuario as U
+
+rectangle "Frontend (React SPA)" as FE {
+  [Pages\n(Home, Games, GameDetail,\nActivity, Profile...)] as PAGES
+  [Componentes\n(Navbar, SocialCards,\nModales...)] as COMPS
+  [Hooks/Auth\n(useUser)] as HOOKS
+  [Cliente API\n(api.js)] as APIC
+  PAGES --> COMPS
+  PAGES --> HOOKS
+  PAGES --> APIC
+}
+
+rectangle "Backend (Laravel API)" as BE {
+  [Routes API\n(routes/api.php)] as ROUTES
+  [Controllers\n(Game, Social, Profile,\nSearch, Recommendation)] as CTRLS
+  [Services\n(ImportRawgGame,\nSocial, Profile,\nRecommendation, Aspect)] as SRVS
+  [Models (Eloquent)\n(Game, User, Review,\nPost, Like...)] as MODELS
+  ROUTES --> CTRLS
+  CTRLS --> SRVS
+  SRVS --> MODELS
+}
+
+database "MySQL" as DB
+folder "Storage público\n(avatars, posts media)" as ST
+cloud "RAWG API" as RAWG
+
+U --> FE
+APIC --> ROUTES : HTTP/JSON
+MODELS --> DB : Eloquent/SQL
+SRVS --> ST : Upload/lectura
+SRVS --> RAWG : HTTP (cliente RAWG)\n+ import/sync
+
+@enduml

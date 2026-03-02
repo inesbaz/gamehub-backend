@@ -1,0 +1,180 @@
+@startuml
+title Diagrama Relacional 01 - Social
+top to bottom direction
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam nodesep 60
+skinparam ranksep 70
+
+package "Social" {
+
+  entity "users" as users {
+    * id : bigint
+    --
+    name : varchar(255)
+    username : varchar(255)
+    email : varchar(255)
+    email_verified_at : timestamp
+    password : varchar(255)
+    description : text
+    avatar_url : varchar(255)
+    country : varchar(2)
+    birthdate : date
+    remember_token : varchar(100)
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    UQ email
+    IDX username
+  }
+
+  entity "posts" as posts {
+    * id : bigint
+    --
+    user_id : bigint <<FK users.id>>
+    game_id : bigint <<FK games.id>>
+    type : enum(note,screenshot,clip)
+    text : text
+    media_url : varchar(255)
+    media_width : smallint
+    media_height : smallint
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    IDX user_id
+    IDX game_id
+  }
+
+  entity "comments" as comments {
+    * id : bigint
+    --
+    user_id : bigint <<FK users.id>>
+    post_id : bigint <<FK posts.id>>
+    body : longtext
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    IDX user_id
+    IDX post_id
+  }
+
+  entity "likes" as likes {
+    * id : bigint
+    --
+    user_id : bigint <<FK users.id>>
+    entity_type : varchar(30)
+    entity_id : bigint
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    UQ (user_id, entity_type, entity_id)
+  }
+
+  entity "follows" as follows {
+    * follower_id : bigint <<FK users.id>>
+    * followed_id : bigint <<FK users.id>>
+    --
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    PK (follower_id, followed_id)
+    IDX followed_id
+  }
+
+  entity "reviews" as reviews {
+    * id : bigint
+    --
+    user_id : bigint <<FK users.id>>
+    game_id : bigint <<FK games.id>>
+    title : varchar(255)
+    body : longtext
+    is_recommended : tinyint(1)
+    spoiler : tinyint(1)
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    UQ (user_id, game_id)
+    IDX game_id
+  }
+
+  entity "ratings" as ratings {
+    * id : bigint
+    --
+    user_id : bigint <<FK users.id>>
+    game_id : bigint <<FK games.id>>
+    score : tinyint
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    UQ (user_id, game_id)
+    IDX (game_id, user_id)
+  }
+
+  entity "emotions" as emotions {
+    * id : bigint
+    --
+    name : varchar(255)
+    slug : varchar(255)
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    UQ name
+    UQ slug
+  }
+
+  entity "review_emotion" as review_emotion {
+    * review_id : bigint <<FK reviews.id>>
+    * emotion_id : bigint <<FK emotions.id>>
+    --
+    intensity : tinyint
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    PK (review_id, emotion_id)
+    IDX emotion_id
+  }
+
+  entity "review_aspect" as review_aspect {
+    * id : bigint
+    --
+    review_id : bigint <<FK reviews.id>>
+    story_score : tinyint
+    gameplay_score : tinyint
+    exploration_score : tinyint
+    art_score : tinyint
+    difficulty_score : tinyint
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    UQ review_id
+  }
+
+  ' Stub mínimo para poder enlazar game_id sin meter todo games aquí
+  entity "games (stub)" as games_stub {
+    * id : bigint
+    --
+    slug : varchar(255)
+  }
+}
+
+users ||--o{ posts
+posts ||--o{ comments
+users ||--o{ comments
+
+users ||--o{ reviews
+games_stub ||--o{ reviews
+
+users ||--o{ ratings
+games_stub ||--o{ ratings
+
+users ||--o{ follows : follower
+users ||--o{ follows : followed
+
+users ||--o{ likes
+
+reviews ||--o{ review_emotion
+emotions ||--o{ review_emotion
+
+reviews ||--o{ review_aspect
+
+@enduml

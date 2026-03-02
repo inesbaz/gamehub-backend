@@ -1,0 +1,39 @@
+@startchen
+title Diagrama E/R - Catálogo
+
+entity "games" as GAME {
+}
+
+entity "screenshots" as SCREENSHOT {
+}
+
+relationship "tiene_screenshot" as HAS_SCREENSHOT {
+}
+HAS_SCREENSHOT -1- GAME
+HAS_SCREENSHOT -N- SCREENSHOT
+
+entity "trailers" as TRAILER {
+}
+
+relationship "tiene_trailer" as HAS_TRAILER {
+}
+HAS_TRAILER -1- GAME
+HAS_TRAILER -N- TRAILER
+
+entity "platforms" as PLATFORM {
+}
+
+relationship "requirements" as REQUIREMENTS {
+}
+REQUIREMENTS -(N,M)- GAME
+REQUIREMENTS -(N,M)- PLATFORM
+
+entity "aspects" as ASPECTS {
+}
+
+relationship "agrega_en" as AGGREGATES {
+}
+AGGREGATES -1- GAME
+AGGREGATES -(0,1)- ASPECTS
+
+@endchen

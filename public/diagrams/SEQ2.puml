@@ -1,0 +1,20 @@
+@startuml
+title Secuencia - Cargar sesión (/api/me)
+skinparam shadowing false
+
+actor Usuario as U
+participant "Frontend (React)\nuseUser.js" as FE
+participant "API (Laravel)\nAuthController@me" as BE
+
+U -> FE : Abre la app
+FE -> BE : GET /api/me
+
+alt Hay sesión
+  BE --> FE : 200 {user}
+else No autenticado
+  BE --> FE : 200 null (o user=null)
+end
+
+FE -> FE : setUser(...) y setLoading(false)
+
+@enduml

@@ -1,0 +1,49 @@
+@startchen
+title Diagrama E/R - Reseñas
+
+entity "users" as USER {
+}
+
+entity "games" as GAME {
+}
+
+entity "reviews" as REVIEW {
+}
+
+relationship "escribe_review" as WRITES_REVIEW {
+}
+WRITES_REVIEW -1- USER
+WRITES_REVIEW -N- REVIEW
+
+relationship "review_de_game" as REVIEW_OF {
+}
+REVIEW_OF -1- GAME
+REVIEW_OF -N- REVIEW
+
+relationship "rating (ratings)" as RATES {
+}
+RATES -(N,M)- USER
+RATES -(N,M)- GAME
+
+entity "emotions" as EMOTION {
+}
+
+relationship "review_emotion" as FEELS {
+}
+FEELS -(N,M)- REVIEW
+FEELS -(N,M)- EMOTION
+
+entity "review_aspect" as REVIEW_ASPECT {
+}
+
+relationship "tiene_aspect_scores" as HAS_ASPECT_SCORES {
+}
+HAS_ASPECT_SCORES -1- REVIEW
+HAS_ASPECT_SCORES -(0,1)- REVIEW_ASPECT
+
+relationship "like_review" as LIKE_REVIEW {
+}
+LIKE_REVIEW -(N,M)- USER
+LIKE_REVIEW -(N,M)- REVIEW
+
+@endchen

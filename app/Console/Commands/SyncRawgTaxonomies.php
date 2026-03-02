@@ -11,7 +11,8 @@ use Illuminate\Support\Carbon;
 
 /*
 *
-* Comando que sincroniza las taxonomías (conjuntos de categorías) de RAWG, de forma que puedan mantenerse actualizadas para relacionar y filtrar juegos.
+* Comando de consola que sincroniza las taxonomías (conjuntos de categorías) de RAWG,
+* de forma que puedan mantenerse actualizadas para relacionar y filtrar juegos.
 *
 */
 class SyncRawgTaxonomies extends Command

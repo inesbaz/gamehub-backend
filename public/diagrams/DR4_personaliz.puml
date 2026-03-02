@@ -1,0 +1,57 @@
+@startuml
+title Diagrama Relacional 04 - Personalización
+top to bottom direction
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam nodesep 60
+skinparam ranksep 70
+
+package "Personalización" {
+
+  entity "users (stub)" as users {
+    * id : bigint
+    --
+    username : varchar(255)
+  }
+
+  entity "games (stub)" as games {
+    * id : bigint
+    --
+    slug : varchar(255)
+  }
+
+  entity "recommendations" as recommendations {
+    * id : bigint
+    --
+    user_id : bigint <<FK users.id>>
+    game_id : bigint <<FK games.id>>
+    score : decimal(6,4)
+    reason : longtext(json)
+    created_at : timestamp
+    updated_at : timestamp
+    ..
+    UQ (user_id, game_id)
+    IDX (user_id, score)
+    IDX game_id
+  }
+
+  entity "similarities" as similarities {
+    * user_a_id : bigint <<FK users.id>>
+    * user_b_id : bigint <<FK users.id>>
+    --
+    common_games : smallint unsigned
+    similarity : decimal(5,4)
+    updated_at : timestamp
+    ..
+    PK (user_a_id, user_b_id)
+    IDX user_b_id
+  }
+}
+
+users ||--o{ recommendations
+games ||--o{ recommendations
+
+users ||--o{ similarities : user_a
+users ||--o{ similarities : user_b
+
+@enduml

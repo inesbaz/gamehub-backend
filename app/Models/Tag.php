@@ -29,6 +29,10 @@ class Tag extends Model
         return $this->belongsToMany(Game::class, 'game_tag');
     }
 
+    /**
+     * Devuelve el nombre a mostrar (display_name).
+     * Usa la traducción por slug si existe en la carpeta lang.
+     */
     public function getDisplayNameAttribute(): string
     {
         $key = 'tags.' . $this->slug;

@@ -1,0 +1,24 @@
+@startuml
+title Secuencia - Login
+skinparam shadowing false
+
+actor Usuario as U
+participant "Frontend (React)\nLogin.jsx" as FE
+participant "API (Laravel)\nAuthController@login" as BE
+database "MySQL" as DB
+
+U -> FE : Enviar formulario (login, password)
+FE -> BE : GET /sanctum/csrf-cookie
+BE --> FE : OK
+
+FE -> BE : POST /login {login, password}
+BE -> DB : Validar credenciales (Auth::attempt)
+
+alt Credenciales incorrectas
+  BE --> FE : 422 (error)
+else Correcto
+  BE --> FE : 200 {user} + sesión regenerada
+  FE -> FE : Redirigir a "/"
+end
+
+@enduml

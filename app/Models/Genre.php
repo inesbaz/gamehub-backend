@@ -29,6 +29,10 @@ class Genre extends Model
         return $this->belongsToMany(Game::class, 'game_genre');
     }
 
+    /**
+     * Devuelve el nombre a mostrar (display_name).
+     * Usa la traducción por slug si existe en la carpeta lang.
+     */
     public function getDisplayNameAttribute(): string
     {
         $key = 'genres.' . $this->slug;
